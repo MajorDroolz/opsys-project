@@ -1,6 +1,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 
+// Testing code.
 int main(void) {
   for (int i = 0; i < 100; i++) {
     srand48(i);

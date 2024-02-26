@@ -1,14 +1,41 @@
-class drand48:
-  def __init__(self, seed=0):
-    self.state = seed & 0xFFFFFFFFFFFF  # Ensure seed is 48-bit
+# Exact algorithm suite in `glibc`.
+# Credit to Dietrich Epp on Stack Overflow.
+# https://stackoverflow.com/a/7287046
+class Rand48(object):
+    def __init__(self, seed):
+        self.n = seed
 
-  def rand(self):
-    self.state = (0x5DEECE66D * self.state + 0xB) & 0xFFFFFFFFFFFF
-    return self.state / 0x1000000000000  # Scale to [0, 1)
-  
+    def seed(self, seed):
+        self.n = seed
+
+    def srand(self, seed):
+        self.n = (seed << 16) + 0x330E
+
+    def next(self):
+        self.n = (25214903917 * self.n + 11) & (2**48 - 1)
+        return self.n
+
+    def drand(self):
+        return self.next() / 2**48
+
+    def lrand(self):
+        return self.next() >> 17
+
+    def mrand(self):
+        n = self.next() >> 16
+        if n & (1 << 31):
+            n -= 1 << 32
+        return n
+
+
+# Create random object.
+random = Rand48(0)
+
+# Testing code.
 for i in range(100):
-  rand = drand48(i)
-  for j in range(100):
-    print("%.10f" % rand.rand())
-  
-  print()
+    random.srand(i)
+
+    for j in range(100):
+        print("%.10f" % random.drand())
+
+    print()
