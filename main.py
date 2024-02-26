@@ -47,4 +47,3 @@ if __name__ == "__main__":
     print(bursts())
     print(bursts())
     print(bursts())
-    print(bursts())
