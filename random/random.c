@@ -8,5 +8,7 @@ int main(void) {
     for (int j = 0; j < 100; j++) {
       printf("%.10f\n", drand48());
     }
+
+    printf("\n");
   }
 }

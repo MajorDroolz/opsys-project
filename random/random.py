@@ -10,3 +10,5 @@ for i in range(100):
   rand = drand48(i)
   for j in range(100):
     print("%.10f" % rand.rand())
+  
+  print()
