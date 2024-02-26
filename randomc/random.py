@@ -28,14 +28,15 @@ class Rand48(object):
         return n
 
 
-# Create random object.
-random = Rand48(0)
+if __name__ == "__main__":
+    # Create random object.
+    random = Rand48(0)
 
-# Testing code.
-for i in range(100):
-    random.srand(i)
+    # Testing code.
+    for i in range(100):
+        random.srand(i)
 
-    for j in range(100):
-        print("%.10f" % random.drand())
+        for j in range(100):
+            print("%.10f" % random.drand())
 
-    print()
+        print()
