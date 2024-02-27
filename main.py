@@ -25,28 +25,29 @@ def generate_process(n):
     for _ in range(n):
         process = {}
         process["arrival_time"] = arrival()
-        process['cpu_bursts'] = bursts()
-        process['bursts'] = []
-        for i in range(process['cpu_bursts']):
-           cpu_burst_time = math.ceil(next_exp())
-           io_burst_time = math.ceil(next_exp()) * 10
-           if i >= n - 26:
-            cpu_burst_time *= 4
-            io_burst_time = math.ceil(io_burst_time / 8)
-            if i == process['cpu_bursts'] - 1:
-                process['bursts'].append((cpu_burst_time, None))
-            else:
-                process['bursts'].append((cpu_burst_time, io_burst_time))
+        process["cpu_bursts"] = bursts()
+        process["bursts"] = []
+        for i in range(process["cpu_bursts"]):
+            cpu_burst_time = math.ceil(next_exp())
+            io_burst_time = math.ceil(next_exp()) * 10
+            if i >= n - 26:
+                cpu_burst_time *= 4
+                io_burst_time = math.ceil(io_burst_time / 8)
+                if i == process["cpu_bursts"] - 1:
+                    process["bursts"].append((cpu_burst_time, None))
+                else:
+                    process["bursts"].append((cpu_burst_time, io_burst_time))
         processes.append(process)
     return processes
+
 
 if __name__ == "__main__":
     # error check arguments
     if len(sys.argv) != 6:
-        print("Usage: python script.py n n_cpu seed lambda_arg e")
+        print("Usage: python script.py n n_cpu seed lambda_arg threshold")
         sys.exit(1)
 
-    _, n, n_cpu, seed, lambda_arg, e = sys.argv
+    _, n, n_cpu, seed, lambda_arg, threshold = sys.argv
     print(
         f"<<< PROJECT PART I -- process set (n={n}) with {n_cpu} CPU-bound process >>>"
     )
