@@ -3,6 +3,8 @@ import math
 import os
 import sys
 
+alphabet = "ABCDEFGHIJKLMNOPQRSTUV"
+
 
 # 1
 def arrival(random):
@@ -11,7 +13,7 @@ def arrival(random):
 
 # 2
 def bursts(random):
-    return math.ceil(random.drand()) * 64
+    return math.ceil(random.drand() * 64)
 
 
 # 3
@@ -42,23 +44,33 @@ if __name__ == "__main__":
         print("Usage: python script.py n n_cpu seed lambda_arg threshold")
         sys.exit(1)
 
+    # parse args
     n = int(sys.argv[1])
     n_cpu = int(sys.argv[2])
     seed = int(sys.argv[3])
     lambda_arg = float(sys.argv[4])
     threshold = int(sys.argv[5])
+
+    # initialize random number generator
+    random = Rand48(0, lambda_arg, threshold)
+    random.srand(seed)
     print(
         f"<<< PROJECT PART I -- process set (n={n}) with {n_cpu} CPU-bound process >>>"
     )
+    for i in range(n - n_cpu):
+        num_bursts = bursts(random)
+        print(
+            f"I/O-bound process {alphabet[i]}: arrival time {arrival(random)}ms; {num_bursts} CPU bursts:"
+        )
+        # for burst in range(num_bursts - 1):
+        #     print(f"--> CPU burst {}ms --> I/O burst {}ms")
+        # print(f"--> CPU burst {}ms")
 
-    # print(f"I/O-bound process {}: arrival time {}ms; {} CPU bursts:")
-    # print(f"--> CPU burst {}ms --> I/O burst {}ms")
-
-    # This is NOT the python library module.
-    random = Rand48(seed, lambda_arg, threshold)
-
-    print(arrival(random))
-    print(arrival(random))
-    print(arrival(random))
-    print(arrival(random))
-    print(arrival(random))
+    for i in range(n - n_cpu, n):
+        num_bursts = bursts(random)
+        print(
+            f"CPU-bound process {alphabet[i]}: arrival time {arrival(random)}ms; {num_bursts} CPU bursts:"
+        )
+        # for burst in range(num_bursts - 1):
+        #     print(f"--> CPU burst {}ms --> I/O burst {}ms")
+        # print(f"--> CPU burst {}ms")
