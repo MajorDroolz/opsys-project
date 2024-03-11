@@ -1,42 +1,35 @@
+from math import log
+
 # Exact algorithm suite in `glibc`.
 # Credit to Dietrich Epp on Stack Overflow.
 # https://stackoverflow.com/a/7287046
 class Rand48(object):
-    def __init__(self, seed):
+    def __init__(self, seed: int) -> None:
         self.n = seed
 
-    def seed(self, seed):
+    def seed(self, seed: int) -> None:
         self.n = seed
 
-    def srand(self, seed):
+    def srand(self, seed: int) -> None:
         self.n = (seed << 16) + 0x330E
 
-    def next(self):
+    def next(self) -> int:
         self.n = (25214903917 * self.n + 11) & (2**48 - 1)
         return self.n
 
-    def drand(self):
+    def drand(self) -> float:
         return self.next() / 2**48
 
-    def lrand(self):
+    def lrand(self) -> int:
         return self.next() >> 17
 
-    def mrand(self):
+    def mrand(self) -> int:
         n = self.next() >> 16
         if n & (1 << 31):
             n -= 1 << 32
         return n
-
-
-if __name__ == "__main__":
-    # Create random object.
-    random = Rand48(0)
-
-    # Testing code.
-    for i in range(100):
-        random.srand(i)
-
-        for j in range(100):
-            print("%.10f" % random.drand())
-
-        print()
+    
+    def next_exp(self, λ: float, threshold: int) -> float:
+        r = self.drand()
+        x = -log(r) / λ
+        return x if x < threshold else self.next_exp(λ, threshold)
