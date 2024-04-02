@@ -50,6 +50,24 @@ class Process:
 
 
 @dataclass
+class Scheduler:
+    def __init__(self, processes: list[Process]):
+        self.processes = processes
+
+    def FCFS(self) -> str:
+        return "undefined"
+
+    def SJF(self) -> str:
+        return "undefined"
+
+    def SRT(self) -> str:
+        return "undefined"
+
+    def RR(self) -> str:
+        return "undefined"
+
+
+@dataclass
 class Simulation:
     n_processes: int
     seed: int
