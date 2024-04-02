@@ -28,6 +28,20 @@ class Burst:
             return f"--> CPU burst {self.cpu}ms"
 
 
+class Queue:
+    def __init__(self):
+        self.queue = []
+
+    def push(self, e):
+        self.queue.append(e)
+
+    def pop(self):
+        return self.queue.pop(0)
+
+    def __len__(self):
+        return len(self.queue)
+
+
 @dataclass
 class Process:
     name: str
@@ -143,4 +157,8 @@ class Simulation:
             result += f"\n{p}"
 
         result += f"<<< PROJECT PART II -- t_cs={self.t_cs}ms; alpha={self.alpha}; t_slice={self.t_slice}ms >>>"
+
+        scheduler = Scheduler(self.processes)
+        result += scheduler.FCFS() + scheduler.SJF() + scheduler.SRT() + scheduler.RR()
+
         return result
