@@ -124,5 +124,5 @@ class Simulation:
         for p in self.processes:
             result += f"\n{p}"
 
-        result = f"<<< PROJECT PART II -- t_cs={self.t_cs}ms; alpha={self.alpha}; t_slice={self.t_slice}ms >>>"
+        result += f"<<< PROJECT PART II -- t_cs={self.t_cs}ms; alpha={self.alpha}; t_slice={self.t_slice}ms >>>"
         return result
