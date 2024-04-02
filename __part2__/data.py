@@ -58,6 +58,9 @@ class Simulation:
     n_cpu: int
     n_io: int
     processes: list[Process]
+    t_cs: int
+    alpha: float
+    t_slice: int
 
     def __init__(
         self,
