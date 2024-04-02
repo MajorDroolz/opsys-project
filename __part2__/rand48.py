@@ -1,5 +1,6 @@
 from math import log
 
+
 # Exact algorithm suite in `glibc`.
 # Credit to Dietrich Epp on Stack Overflow.
 # https://stackoverflow.com/a/7287046
@@ -28,7 +29,7 @@ class Rand48(object):
         if n & (1 << 31):
             n -= 1 << 32
         return n
-    
+
     def next_exp(self, λ: float, threshold: int) -> float:
         r = self.drand()
         x = -log(r) / λ
