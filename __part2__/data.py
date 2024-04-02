@@ -60,7 +60,15 @@ class Simulation:
     processes: list[Process]
 
     def __init__(
-        self, n_processes: int, seed: int, λ: float, threshold: int, n_cpu: int
+        self,
+        n_processes: int,
+        seed: int,
+        λ: float,
+        threshold: int,
+        n_cpu: int,
+        t_cs: int,
+        alpha: float,
+        t_slice: int,
     ):
         self.n_processes = n_processes
         self.seed = seed
@@ -68,6 +76,10 @@ class Simulation:
         self.threshold = threshold
         self.n_cpu = n_cpu
         self.n_io = n_processes - n_cpu
+
+        self.t_cs = t_cs
+        self.alpha = alpha
+        self.t_slice = t_slice
 
         self.processes = self.generate()
 
@@ -108,4 +120,6 @@ class Simulation:
         result = f"<<< PROJECT PART I -- process set (n={self.n_processes}) with {self.n_cpu} CPU-bound process{'' if self.n_cpu == 1 else 'es'} >>>"
         for p in self.processes:
             result += f"\n{p}"
+
+        result = f"<<< PROJECT PART II -- t_cs={self.t_cs}ms; alpha={self.alpha}; t_slice={self.t_slice}ms >>>"
         return result
