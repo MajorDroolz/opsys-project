@@ -75,6 +75,8 @@ class Simulator:
     cpu_time: int = 0
     cpu_since: int = 0
 
+    switching: bool = False
+
     def reset(self) -> None:
         self.time = 0
         self.events.clear()
@@ -83,6 +85,10 @@ class Simulator:
 
         self.cpu_time = 0
         self.cpu_since = 0
+        self.switching = False
+        self.algorithm = Algorithm()
+        self.current = None
+        self.processes = set()
 
     def addEvent(self, kind: str, process: Process, wait: int = 0) -> None:
         self.events.add((wait + self.time, kind, process))
@@ -96,8 +102,9 @@ class Simulator:
     def off(self, kind: str, process: Process, fn: Callable[[Simulator], None]) -> None:
         self.functions.remove((kind, process, fn))
 
-    def print(self, message: str) -> None:
-        queue_names = [p[1].name for p in list(self.algorithm.queue.queue)]
+    def print(self, message: str, override=False) -> None:
+        # if not override and self.time >= 10_000: return
+        queue_names = [p[1].name for p in self.algorithm.queue]
         if len(queue_names) == 0:
             queue_names = ["<empty>"]
         print(f"time {self.time}ms: {message} [Q {' '.join(queue_names)}]")
@@ -114,7 +121,7 @@ class Simulator:
         print('')
 
         if header:
-            print(f'<<< PROJECT PART II -- t_cs={self.state.t_cs}ms; alpha={self.state.alpha}; t_slice={self.state.t_slice}ms >>>')
+            print('<<< PROJECT PART II -- t_cs={}ms; alpha={:.2f}; t_slice={}ms >>>'.format(self.state.t_cs, self.state.alpha, self.state.t_slice))
 
         self.print(f"Simulator started for {self.algorithm.name}")
 
@@ -126,16 +133,17 @@ class Simulator:
             self.time, current_kind, current_process = current
 
             for kind, process, fn in self.functions:
-                if current_kind != kind or process != current_process:
+                if current_kind != kind or process is not current_process:
                     continue
                 fn(self)
 
-            if self.current is None:
-                process = self.algorithm.popNext()
+            if self.current is None and not self.switching:
+                process = self.algorithm.next()
                 if process != None:
                     process.moveToCPU(self)
+                    self.switching = True
 
-        self.print(f"Simulator ended for {self.algorithm.name}")
+        self.print(f"Simulator ended for {self.algorithm.name}", True)
         self.running = False
 
         return self.stats()
@@ -147,6 +155,7 @@ class Simulator:
         self.running = True
 
     def runProcess(self, process: Process) -> None:
+        self.switching = False
         self.current = process
         self.cpu_since = self.time
 

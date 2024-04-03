@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Union, Literal, TYPE_CHECKING
 
@@ -72,12 +73,12 @@ class Process:
         simulator.stopProcess()
 
         if burst.io is None:
-            simulator.print(f"Process {self.name}{self.t()} terminated")
+            simulator.print(f"Process {self.name} terminated", True)
             simulator.addEvent("exit", self, simulator.state.t_cs // 2)
         else:
             simulator.addEvent("io", self, simulator.state.t_cs // 2)
             simulator.print(
-                f"Process {self.name}{self.t()} completed a CPU burst; {len(self.bursts) - self.current_burst - 1} bursts to go"
+                f"Process {self.name}{self.t()} completed a CPU burst; {len(self.bursts) - self.current_burst - 1} burst{'' if len(self.bursts) - self.current_burst - 1 == 1 else 's'} to go"
             )
             simulator.algorithm.onFinishCPU(self, simulator)
             simulator.print(
@@ -100,6 +101,8 @@ class Process:
         simulator.addEvent("finish-io", self, burst.io)
 
     def onFinishIO(self, simulator: "Simulator") -> None:
+        # if simulator.time >= 266393: 
+        #     print("", end='')
         burst = self.bursts[self.current_burst]
         self.current_burst += 1
         if burst.io == None:

@@ -61,12 +61,6 @@ class State:
         result = f"<<< PROJECT PART I -- process set (n={self.n_processes}) with {self.n_cpu} CPU-bound process{'' if self.n_cpu == 1 else 'es'} >>>"
         for p in processes:
             result += "\n"
-            result += f"{p.bound}-bound process {p.name}: arrival time {p.arrival}ms; {len(p.bursts)} CPU burst{'' if len(p.bursts) == 1 else 's'}:"
-            for b in p.bursts:
-                result += "\n"
-                if b.io is not None:
-                    result += f"--> CPU burst {b.cpu}ms --> I/O burst {b.io}ms"
-                else:
-                    result += f"--> CPU burst {b.cpu}ms"
+            result += f"{p.bound}-bound process {p.name}: arrival time {p.arrival}ms; {len(p.bursts)} CPU burst{'' if len(p.bursts) == 1 else 's'}"
         
         return result
