@@ -75,31 +75,3 @@ class SJF(Algorithm):
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         self.queue.append((process.tau, process))
         self.queue.sort()
-
-class SRT(Algorithm):
-    name = "SRT"
-    tau: int = 0
-
-    def onBegin(self, simulator: 'Simulator') -> None:
-        self.tau = ceil(1 / simulator.state.λ)
-
-    def onArrival(self, process: Process, simulator: "Simulator") -> None:
-        process.tau = self.tau
-        self.queue.append((process.tau, process))
-        self.queue.sort()
-
-    def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
-        self.queue.remove((process.tau, process))
-        tau = process.tau
-        t = process.bursts[process.current_burst].cpu
-        alpha = simulator.state.alpha
-        self.tau = ceil(alpha * t) + ceil((1 - alpha) * tau)
-
-        process.tau = self.tau
-        self.queue.append((process.tau, process))
-        self.queue.sort()
-        simulator.print(f'Recalculating tau for process {process.name}: old tau {tau}ms ==> new tau {self.tau}ms')
-    
-    def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
-        self.queue.append((process.tau, process))
-        self.queue.sort()
