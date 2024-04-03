@@ -27,4 +27,5 @@ state = State(n_processes, n_cpu, seed, λ, threshold, t_cs, alpha, t_slice)
 simulator = Simulator(state)
 simulator.run(FCFS())
 
-print(simulator.stats())
+simout = open('simout.txt', 'w')
+simout.write(str(simulator.stats()))
