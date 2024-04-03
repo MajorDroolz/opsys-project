@@ -20,12 +20,12 @@ t_slice = int(argv[8])
 state = State(n_processes, n_cpu, seed, λ, threshold, t_cs, alpha, t_slice)
 
 # Part 1
-# processes = state.generate()
-# state.print(processes)
+processes = state.generate()
+print(state.toString(processes))
 
 # Part 2
-simulator = Simulator(state)
-simulator.run(FCFS())
+# simulator = Simulator(state)
+# simulator.run(FCFS())
 
-simout = open('simout.txt', 'w')
-simout.write(str(simulator.stats()))
+# simout = open('simout.txt', 'w')
+# simout.write(str(simulator.stats()))
