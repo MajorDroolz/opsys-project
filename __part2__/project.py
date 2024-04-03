@@ -1,12 +1,12 @@
 from sys import argv
-from util import ERROR
 from state import State
 from simulator import Simulator
 from algorithm import FCFS
 
 
 if len(argv) != 9:
-    ERROR("Invalid number of parameters.")
+    print(f"ERROR: Invalid number of parameters.")
+    exit(1)
 
 n_processes = int(argv[1])
 n_cpu = int(argv[2])
