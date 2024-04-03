@@ -1,9 +1,11 @@
 from sys import argv
-from data import Simulation
 from util import ERROR
+from state import State
+from simulator import Simulator
+from algorithm import FCFS
 
 
-if len(argv) != 6:
+if len(argv) != 9:
     ERROR("Invalid number of parameters.")
 
 n_processes = int(argv[1])
@@ -15,4 +17,12 @@ t_cs = int(argv[6])
 alpha = float(argv[7])
 t_slice = int(argv[8])
 
-Simulation(n_processes, n_cpu, seed, λ, threshold, t_cs, alpha, t_slice).part1()
+state = State(n_processes, n_cpu, seed, λ, threshold, t_cs, alpha, t_slice)
+
+# Part 1
+processes = state.generate()
+state.print(processes)
+
+# Part 2
+simulator = Simulator(state)
+simulator.run(FCFS())
