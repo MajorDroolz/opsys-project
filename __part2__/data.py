@@ -5,9 +5,6 @@ from util import ERROR
 from math import floor, ceil
 
 
-BOUNDTYPE = Union[Literal["CPU"], Literal["I/O"]]
-
-
 @dataclass
 class Burst:
     """
@@ -17,112 +14,37 @@ class Burst:
     cpu: int
     io: Union[int, None]
 
-    def __init__(self, cpu: int, io: Union[int, None]) -> None:
-        self.cpu = cpu
-        self.io = io
-
-    def __str__(self):
-        if self.io is not None:
-            return f"--> CPU burst {self.cpu}ms --> I/O burst {self.io}ms"
-        else:
-            return f"--> CPU burst {self.cpu}ms"
-
-
-class Queue:
-    def __init__(self):
-        self.queue = []
-
-    def push(self, e):
-        self.queue.append(e)
-
-    def pop(self):
-        return self.queue.pop(0)
-
-    def __len__(self):
-        return len(self.queue)
-
 
 @dataclass
 class Process:
     name: str
     arrival: int
     bursts: list[Burst]
-    bound: BOUNDTYPE
-
-    def __init__(self, name: str, arrival: int, bursts: list[Burst], bound: BOUNDTYPE):
-        self.name = name
-        self.arrival = arrival
-        self.bursts = bursts
-        self.bound = bound
-
-    def __str__(self) -> str:
-        result = f"{self.bound}-bound process {self.name}: arrival time {self.arrival}ms; {len(self.bursts)} CPU burst{'' if len(self.bursts) == 1 else 's'}:"
-        for b in self.bursts:
-            result += f"\n{b}"
-
-        return result
-
-
-@dataclass
-class Scheduler:
-    def __init__(self, processes: list[Process]):
-        self.processes = processes
-
-    def FCFS(self) -> str:
-        return "undefined"
-
-    def SJF(self) -> str:
-        return "undefined"
-
-    def SRT(self) -> str:
-        return "undefined"
-
-    def RR(self) -> str:
-        return "undefined"
+    bound: Union[Literal["CPU"], Literal["I/O"]]
 
 
 @dataclass
 class Simulation:
     n_processes: int
+    n_cpu: int
     seed: int
     λ: float
-    bound: int
-    n_cpu: int
-    n_io: int
-    processes: list[Process]
+    threshold: int
     t_cs: int
     alpha: float
     t_slice: int
+    processes: list[Process] = []
+    n_io: int = 0
 
-    def __init__(
-        self,
-        n_processes: int,
-        seed: int,
-        λ: float,
-        threshold: int,
-        n_cpu: int,
-        t_cs: int,
-        alpha: float,
-        t_slice: int,
-    ):
-        self.n_processes = n_processes
-        self.seed = seed
-        self.λ = λ
-        self.threshold = threshold
-        self.n_cpu = n_cpu
-        self.n_io = n_processes - n_cpu
-
-        self.t_cs = t_cs
-        self.alpha = alpha
-        self.t_slice = t_slice
-
+    def __post_init__(self):
         self.processes = self.generate()
+        self.n_io = self.n_processes - self.n_cpu
 
     def generate(self) -> list[Process]:
         rand = Rand48(0)
         rand.srand(self.seed)
 
-        names = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        names = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         processes = []
 
         for i in range(self.n_processes):
@@ -151,14 +73,17 @@ class Simulation:
 
         return processes
 
-    def __str__(self) -> str:
-        result = f"<<< PROJECT PART I -- process set (n={self.n_processes}) with {self.n_cpu} CPU-bound process{'' if self.n_cpu == 1 else 'es'} >>>"
+    def part1(self) -> None:
+        print(
+            f"<<< PROJECT PART I -- process set (n={self.n_processes}) with {self.n_cpu} CPU-bound process{'' if self.n_cpu == 1 else 'es'} >>>"
+        )
         for p in self.processes:
-            result += f"\n{p}"
-
-        result += f"<<< PROJECT PART II -- t_cs={self.t_cs}ms; alpha={self.alpha}; t_slice={self.t_slice}ms >>>"
-
-        scheduler = Scheduler(self.processes)
-        result += scheduler.FCFS() + scheduler.SJF() + scheduler.SRT() + scheduler.RR()
-
-        return result
+            print(
+                f"{p.bound}-bound process {p.name}: arrival time {p.arrival}ms; {len(p.bursts)} CPU burst{'' if len(p.bursts) == 1 else 's'}:",
+                end="",
+            )
+            for b in p.bursts:
+                if b.io is not None:
+                    print(f"--> CPU burst {b.cpu}ms --> I/O burst {b.io}ms", end="")
+                else:
+                    print(f"--> CPU burst {b.cpu}ms", end="")

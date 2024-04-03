@@ -15,4 +15,4 @@ t_cs = int(argv[6])
 alpha = float(argv[7])
 t_slice = int(argv[8])
 
-print(Simulation(n_processes, seed, λ, threshold, n_cpu, t_cs, alpha, t_slice), end="")
+Simulation(n_processes, n_cpu, seed, λ, threshold, t_cs, alpha, t_slice).part1()
