@@ -1,7 +1,7 @@
 from sys import argv
 from state import State
 from simulator import Simulator
-from algorithm import FCFS, SJF, SRT
+from algorithm import FCFS, SJF
 
 
 if len(argv) != 9:
