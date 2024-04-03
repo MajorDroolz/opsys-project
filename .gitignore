@@ -4,3 +4,4 @@ random/diff.txt
 
 */simout.txt
 *.out
+__pycache__/
