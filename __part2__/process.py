@@ -20,7 +20,7 @@ class ProcessStats:
     ta_times: list[int]
 
 
-@dataclass
+@dataclass(order=True)
 class Process:
     name: str
     arrival: int
@@ -36,6 +36,8 @@ class Process:
     start_ta: int = 0
     ta_times: list[int] = field(default_factory=list)
 
+    tau: int = -1
+
     def __hash__(self) -> int:
         return hash(self.name)
 
@@ -47,7 +49,7 @@ class Process:
         self.start_wait = simulator.time
         self.start_ta = simulator.time
         simulator.algorithm.onArrival(self, simulator)
-        simulator.print(f"Process {self.name} arrived; added to ready queue")
+        simulator.print(f"Process {self.name}{self.t()} arrived; added to ready queue")
 
     def onCPU(self, simulator: "Simulator") -> None:
         burst = self.bursts[self.current_burst]
@@ -58,23 +60,26 @@ class Process:
 
         simulator.addEvent("finish-cpu", self, burst.cpu)
         simulator.print(
-            f"Process {self.name} started using the CPU for {burst.cpu}ms burst"
+            f"Process {self.name}{self.t()} started using the CPU for {burst.cpu}ms burst"
         )
+
+    def t(self) -> str:
+        return f' (tau {self.tau}ms)' if self.tau != -1 else ''
 
     def onFinishCPU(self, simulator: "Simulator") -> None:
         burst = self.bursts[self.current_burst]
 
         simulator.stopProcess()
-        simulator.algorithm.onFinishCPU(self, simulator)
 
         if burst.io is None:
-            simulator.print(f"Process {self.name} terminated")
+            simulator.print(f"Process {self.name}{self.t()} terminated")
             simulator.addEvent("exit", self, simulator.state.t_cs // 2)
         else:
             simulator.addEvent("io", self, simulator.state.t_cs // 2)
             simulator.print(
-                f"Process {self.name} completed a CPU burst; {len(self.bursts) - self.current_burst - 1} bursts to go"
+                f"Process {self.name}{self.t()} completed a CPU burst; {len(self.bursts) - self.current_burst - 1} bursts to go"
             )
+            simulator.algorithm.onFinishCPU(self, simulator)
             simulator.print(
                 f"Process {self.name} switching out of CPU; blocking on I/O until time {simulator.time + burst.io + simulator.state.t_cs // 2}ms"
             )
@@ -102,7 +107,7 @@ class Process:
         simulator.algorithm.onFinishIO(self, simulator)
         self.start_wait = simulator.time
         self.start_ta = simulator.time
-        simulator.print(f"Process {self.name} completed I/O; added to ready queue")
+        simulator.print(f"Process {self.name}{self.t()} completed I/O; added to ready queue")
 
     def handle(self, simulator: "Simulator") -> None:
         simulator.on("arrival", self, self.onArrival)

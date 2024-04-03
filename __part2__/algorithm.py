@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Union, Literal, Tuple, TYPE_CHECKING
 from process import Process
 from queue import PriorityQueue
+from math import ceil
 
 if TYPE_CHECKING:
     from simulator import Simulator
@@ -10,6 +11,9 @@ if TYPE_CHECKING:
 class Algorithm:
     queue = PriorityQueue[Tuple[int, Process]]()
     name: str
+
+    def onBegin(self, simulator: 'Simulator') -> None:
+        pass
 
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
         pass
@@ -46,3 +50,28 @@ class FCFS(Algorithm):
     
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         self.queue.put((simulator.time, process))
+
+
+class SJF(Algorithm):
+    name = "SJF"
+
+    tau: int = 0
+
+    def onBegin(self, simulator: 'Simulator') -> None:
+        self.tau = ceil(1 / simulator.state.λ)
+
+    def onArrival(self, process: Process, simulator: "Simulator") -> None:
+        process.tau = self.tau
+        self.queue.put((process.tau, process))
+
+    def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
+        tau = process.tau
+        t = process.bursts[process.current_burst].cpu
+        alpha = simulator.state.alpha
+        self.tau = ceil(alpha * t + (1 - alpha) * tau)
+
+        process.tau = self.tau
+        simulator.print(f'Recalculating tau for process {process.name}: old tau {tau}ms ==> new tau {self.tau}ms')
+    
+    def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
+        self.queue.put((process.tau, process))

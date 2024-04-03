@@ -102,11 +102,19 @@ class Simulator:
             queue_names = ["<empty>"]
         print(f"time {self.time}ms: {message} [Q {' '.join(queue_names)}]")
 
-    def run(self, algorithm: Algorithm) -> None:
+    def run(self, algorithm: Algorithm, header=False) -> Stats:
+        self.reset()
         self.algorithm = algorithm
         self.processes = set(self.state.generate())
 
+        algorithm.onBegin(self)
+
         [p.handle(self) for p in self.processes]
+
+        print('')
+
+        if header:
+            print(f'<<< PROJECT PART II -- t_cs={self.state.t_cs}ms; alpha={self.state.alpha}; t_slice={self.state.t_slice}ms >>>')
 
         self.print(f"Simulator started for {self.algorithm.name}")
 
@@ -129,6 +137,8 @@ class Simulator:
 
         self.print(f"Simulator ended for {self.algorithm.name}")
         self.running = False
+
+        return self.stats()
 
     def stop(self) -> None:
         self.running = False
