@@ -12,10 +12,10 @@ class Algorithm:
     queue: list[Tuple[int, Process]]
     name: str
 
-    def __init__(self ):
+    def __init__(self):
         self.queue = []
 
-    def onBegin(self, simulator: 'Simulator') -> None:
+    def onBegin(self, simulator: "Simulator") -> None:
         pass
 
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
@@ -39,7 +39,7 @@ class Algorithm:
     def next(self) -> Union[Process, None]:
         if len(self.queue) == 0:
             return None
-        
+
         _, process = self.queue[0]
         return process
 
@@ -50,7 +50,7 @@ class FCFS(Algorithm):
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
         self.queue.append((simulator.time, process))
         self.queue.sort()
-    
+
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         self.queue.append((simulator.time, process))
         self.queue.sort()
@@ -70,8 +70,10 @@ class SJF(Algorithm):
         alpha = simulator.state.alpha
 
         process.tau = ceil(alpha * t + (1 - alpha) * tau)
-        simulator.print(f'Recalculating tau for process {process.name}: old tau {tau}ms ==> new tau {process.tau}ms')
-    
+        simulator.print(
+            f"Recalculating tau for process {process.name}: old tau {tau}ms ==> new tau {process.tau}ms"
+        )
+
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         self.queue.append((process.tau, process))
         self.queue.sort()

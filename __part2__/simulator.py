@@ -103,7 +103,8 @@ class Simulator:
         self.functions.remove((kind, process, fn))
 
     def print(self, message: str, override=False) -> None:
-        if not override and self.time >= 10_000: return
+        if not override and self.time >= 10_000:
+            return
         queue_names = [p[1].name for p in self.algorithm.queue]
         if len(queue_names) == 0:
             queue_names = ["<empty>"]
@@ -118,10 +119,14 @@ class Simulator:
 
         [p.handle(self) for p in self.processes]
 
-        print('')
+        print("")
 
         if header:
-            print('<<< PROJECT PART II -- t_cs={}ms; alpha={:.2f}; t_slice={}ms >>>'.format(self.state.t_cs, self.state.alpha, self.state.t_slice))
+            print(
+                "<<< PROJECT PART II -- t_cs={}ms; alpha={:.2f}; t_slice={}ms >>>".format(
+                    self.state.t_cs, self.state.alpha, self.state.t_slice
+                )
+            )
 
         self.print(f"Simulator started for {self.algorithm.name}")
 

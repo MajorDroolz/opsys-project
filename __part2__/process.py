@@ -65,7 +65,7 @@ class Process:
         )
 
     def t(self) -> str:
-        return f' (tau {self.tau}ms)' if self.tau != -1 else ''
+        return f" (tau {self.tau}ms)" if self.tau != -1 else ""
 
     def onFinishCPU(self, simulator: "Simulator") -> None:
         burst = self.bursts[self.current_burst]
@@ -101,7 +101,7 @@ class Process:
         simulator.addEvent("finish-io", self, burst.io)
 
     def onFinishIO(self, simulator: "Simulator") -> None:
-        # if simulator.time >= 266393: 
+        # if simulator.time >= 266393:
         #     print("", end='')
         burst = self.bursts[self.current_burst]
         self.current_burst += 1
@@ -110,7 +110,9 @@ class Process:
         simulator.algorithm.onFinishIO(self, simulator)
         self.start_wait = simulator.time
         self.start_ta = simulator.time
-        simulator.print(f"Process {self.name}{self.t()} completed I/O; added to ready queue")
+        simulator.print(
+            f"Process {self.name}{self.t()} completed I/O; added to ready queue"
+        )
 
     def handle(self, simulator: "Simulator") -> None:
         simulator.on("arrival", self, self.onArrival)
@@ -128,5 +130,5 @@ class Process:
             self.context_switches,
             [b.cpu for b in self.bursts],
             self.wait_times,
-            self.ta_times
+            self.ta_times,
         )
