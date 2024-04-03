@@ -2,7 +2,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Tuple, Callable, Union
 from process import Process
-from handler import Handler
 from rand48 import Rand48
 from dataclasses import dataclass
 from rand48 import Rand48

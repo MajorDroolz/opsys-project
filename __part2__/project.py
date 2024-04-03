@@ -20,8 +20,8 @@ t_slice = int(argv[8])
 state = State(n_processes, n_cpu, seed, λ, threshold, t_cs, alpha, t_slice)
 
 # Part 1
-processes = state.generate()
-state.print(processes)
+# processes = state.generate()
+# state.print(processes)
 
 # Part 2
 simulator = Simulator(state)
