@@ -36,7 +36,7 @@ class Algorithm:
         if not process:
             return False
 
-        self.queue = sorted(p for p in self.queue if p[1] is not process)
+        self.queue = [p for p in self.queue if p[1] is not process]
         process.onWillCPU(simulator.time)
         simulator.addEvent(Event.CPU, process, simulator.state.t_cs // 2)
         simulator.switching = True
@@ -85,7 +85,6 @@ class FCFS(Algorithm):
         super().onArrival(process, simulator)
 
         self.queue.append((simulator.time, process))
-        self.queue.sort()
 
         name = process.name
         simulator.print(f"Process {name} arrived; added to ready queue")
@@ -126,7 +125,6 @@ class FCFS(Algorithm):
         super().onFinishIO(process, simulator)
 
         self.queue.append((simulator.time, process))
-        self.queue.sort()
 
         simulator.print(f"Process {process.name} completed I/O; added to ready queue")
 
@@ -272,13 +270,13 @@ class SRT(SJF):
 
 class RR(FCFS):
     name = "RR"
+    counter = 1
 
     def onPreempt(self, process: Process, simulator: "Simulator") -> None:
         super().onPreempt(process, simulator)
 
         simulator.exitProcess(process)
         self.queue.append((simulator.time, process))
-        self.queue.sort()
 
         simulator.switching = False
 
@@ -315,7 +313,7 @@ class RR(FCFS):
         cpu, name = process.bursts[process.current_burst].cpu, process.name
         simulator.runProcess(process)
 
-        if process.cpu_left < simulator.state.t_slice:
+        if process.cpu_left <= simulator.state.t_slice:
             simulator.addEvent(Event.FINISH_CPU, process, process.cpu_left)
         else:
             simulator.addEvent(Event.EXPIRE, process, simulator.state.t_slice)

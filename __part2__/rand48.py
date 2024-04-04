@@ -7,9 +7,9 @@ class Event(IntEnum):
     CPU = 2
     FINISH_IO = 3
     IO = 4
-    ARRIVAL = 5
-    EXIT = 6
-    PREEMPT = 7
+    PREEMPT = 5
+    ARRIVAL = 6
+    EXIT = 7
     EXPIRE = 8
 
 
