@@ -45,7 +45,7 @@ class Stats:
 -- average wait time: {:.3f} ms ({:.3f} ms/{:.3f} ms)
 -- average turnaround time: {:.3f} ms ({:.3f} ms/{:.3f} ms)
 -- number of context switches: {} ({}/{})
--- number of preemptions: {} ({}/{})\n\n""".format(
+-- number of preemptions: {} ({}/{})""".format(
             self.algorithm,
             self.cpu,
             self.total_average_cpu_burst,
@@ -69,14 +69,14 @@ class Stats:
 @dataclass
 class Simulator:
     state: State
-    processes: set[Process] = field(default_factory=set)
+    processes: list[Process] = field(default_factory=list)
     current: Union[Process, None] = None
     algorithm = Algorithm()
 
     time: int = 0
     events: list[Tuple[int, Event, Process]] = field(default_factory=list)
-    functions: set[Tuple[Event, Process, Callable[[Process, Simulator], None]]] = field(
-        default_factory=set
+    functions: list[Tuple[Event, Process, Callable[[Process, Simulator], None]]] = field(
+        default_factory=list
     )
 
     running = False
@@ -89,7 +89,7 @@ class Simulator:
     def reset(self) -> None:
         self.time = 0
         self.events.clear()
-        self.functions = set()
+        self.functions = []
         self.running = False
 
         self.cpu_time = 0
@@ -97,7 +97,7 @@ class Simulator:
         self.switching = False
         self.algorithm = Algorithm()
         self.current = None
-        self.processes = set()
+        self.processes = []
 
     def addEvent(self, kind: Event, process: Process, wait: int = 0) -> None:
         self.events.append((wait + self.time, kind, process))
@@ -108,7 +108,7 @@ class Simulator:
     def on(
         self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]
     ) -> None:
-        self.functions.add((kind, process, fn))
+        self.functions.append((kind, process, fn))
 
     def off(
         self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]
@@ -126,7 +126,7 @@ class Simulator:
     def run(self, algorithm: Algorithm, header=False) -> Stats:
         self.reset()
         self.algorithm = algorithm
-        self.processes = set(self.state.generate())
+        self.processes = list(self.state.generate())
 
         [algorithm.onProcess(p, self) for p in self.processes]
 

@@ -65,7 +65,7 @@ except:
     rr = simulator.stats()
 
 simout = open("simout.txt", "w")
-simout.write(str(fcfs))
-simout.write(str(sjf))
-simout.write(str(srt))
-simout.write(str(rr))
+simout.write(f'{fcfs}\n\n')
+simout.write(f'{sjf}\n\n')
+simout.write(f'{srt}\n\n')
+simout.write(f'{rr}\n')

@@ -1,4 +1,4 @@
-from typing import Tuple, TYPE_CHECKING
+from typing import Tuple, TYPE_CHECKING, Union
 from process import Process
 from math import ceil
 from rand48 import Event
@@ -14,6 +14,19 @@ class Algorithm:
 
     def __init__(self):
         self.queue = []
+
+    def getNext(self) -> Union[Process, None]:
+        return len(self.queue) > 0 and self.queue[0] and self.queue[0][1] or None
+
+    def addToQueue(self, process: Process, simulator: "Simulator", priority: Union[int, None] = None) -> None:
+        self.queue.append((priority or process.tau, process))
+        process.onEnterQueue(simulator.time)
+        if priority is not None:
+            self.queue.sort()
+    
+    def removeFromQueue(self, process: Process, simulator: "Simulator") -> None:
+        self.queue = [(o, p) for o, p in self.queue if p is not process]
+        process.onLeaveQueue(simulator.time - 0 * (simulator.state.t_cs // 2))
 
     def onProcess(self, process: Process, simulator: "Simulator") -> None:
         simulator.on(Event.ARRIVAL, process, self.onArrival)
@@ -31,14 +44,13 @@ class Algorithm:
         if simulator.current is not None or simulator.switching:
             return False
 
-        process = len(self.queue) > 0 and self.queue[0] and self.queue[0][1]
+        successor = self.getNext()
 
-        if not process:
+        if not successor:
             return False
 
-        self.queue = [p for p in self.queue if p[1] is not process]
-        process.onWillCPU(simulator.time)
-        simulator.addEvent(Event.CPU, process, simulator.state.t_cs // 2)
+        self.removeFromQueue(successor, simulator)
+        simulator.addEvent(Event.CPU, successor, simulator.state.t_cs // 2)
         simulator.switching = True
 
         return True
@@ -84,7 +96,7 @@ class FCFS(Algorithm):
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
         super().onArrival(process, simulator)
 
-        self.queue.append((simulator.time, process))
+        self.addToQueue(process, simulator)
 
         name = process.name
         simulator.print(f"Process {name} arrived; added to ready queue")
@@ -124,7 +136,7 @@ class FCFS(Algorithm):
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         super().onFinishIO(process, simulator)
 
-        self.queue.append((simulator.time, process))
+        self.addToQueue(process, simulator)
 
         simulator.print(f"Process {process.name} completed I/O; added to ready queue")
 
@@ -136,8 +148,7 @@ class SJF(Algorithm):
         super().onArrival(process, simulator)
 
         process.tau = ceil(1 / simulator.state.λ)
-        self.queue.append((process.tau, process))
-        self.queue.sort()
+        self.addToQueue(process, simulator, process.tau)
 
         name, tau = process.name, process.tau
         simulator.print(f"Process {name} (tau {tau}ms) arrived; added to ready queue")
@@ -193,10 +204,9 @@ class SJF(Algorithm):
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         super().onFinishIO(process, simulator)
 
-        self.queue.append((process.tau, process))
-        self.queue.sort()
-
+        self.addToQueue(process, simulator, process.tau)
         name, tau = process.name, process.tau
+
         simulator.print(
             f"Process {name} (tau {tau}ms) completed I/O; added to ready queue"
         )
@@ -238,19 +248,17 @@ class SRT(SJF):
         super().onPreempt(process, simulator)
 
         simulator.exitProcess(process)
-        self.queue.append((process.tau - process.cpu_done, process))
-        self.queue.sort()
-
         simulator.switching = False
+
+        self.addToQueue(process, simulator, process.tau - process.cpu_done)
 
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         process.onFinishIO(simulator.time)
 
         name, tau = process.name, process.tau
         curr, time = simulator.current, simulator.time
-
-        self.queue.append((process.tau, process))
-        self.queue.sort()
+        
+        self.addToQueue(process, simulator, process.tau)
 
         if (
             curr is not None
@@ -261,6 +269,7 @@ class SRT(SJF):
 
             simulator.stopProcess()
             simulator.addEvent(Event.PREEMPT, curr, simulator.state.t_cs // 2)
+            # curr.onWillPreempt(simulator.time)
             curr.onFinishCPU(simulator.time)
             simulator.switching = True
 
@@ -281,7 +290,7 @@ class RR(FCFS):
         super().onPreempt(process, simulator)
 
         simulator.exitProcess(process)
-        self.queue.append((simulator.time, process))
+        self.addToQueue(process, simulator)
 
         simulator.switching = False
 
@@ -306,6 +315,7 @@ class RR(FCFS):
         simulator.removeEventsFor(process)
         simulator.stopProcess()
         simulator.addEvent(Event.PREEMPT, process, simulator.state.t_cs // 2)
+        # process.onWillPreempt(simulator.time)
         process.onFinishCPU(simulator.time)
         simulator.switching = True
 
