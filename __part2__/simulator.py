@@ -146,6 +146,9 @@ class Simulator:
         while self.running and len(self.events) > 0 and self.time < 1_000_000:
             self.events.sort()
 
+            # if self.algorithm.name == 'RR' and self.time >= 50977:
+            #     print('  ', [(t, e.value, p.name) for t, e, p in self.events])
+
             self.time, current_kind, current_process = self.events.pop(0)
 
             for kind, process, fn in self.functions:
