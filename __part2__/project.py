@@ -1,7 +1,7 @@
 from sys import argv
 from state import State
 from simulator import Simulator
-from algorithm import FCFS, SJF
+from algorithm import FCFS, SJF, SRT
 
 
 if len(argv) != 9:
@@ -25,11 +25,16 @@ print(state.toString(processes))
 
 # Part 2
 simulator = Simulator(state)
-fcfs = simulator.run(FCFS(), header=True)
-sjf = simulator.run(SJF())
-# srt = simulator.run(SRT())
+try:
+    fcfs = simulator.run(FCFS(), header=True)
+    sjf = simulator.run(SJF())
+    srt = simulator.run(SRT())
+except Exception as e:
+    print(e)
 
 simout = open("simout.txt", "w")
 simout.write(str(fcfs))
 simout.write("\n\n")
 simout.write(str(sjf))
+simout.write("\n\n")
+simout.write(str(srt))

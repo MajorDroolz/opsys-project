@@ -5,7 +5,7 @@ from process import Process
 from state import State
 from rand48 import Event
 from algorithm import Algorithm
-from statistics import mean
+from statistics import mean, StatisticsError
 from os import environ
 import math
 
@@ -96,7 +96,7 @@ class Simulator:
         self.events.append((wait + self.time, kind, process))
 
     def removeEventsFor(self, process: Process) -> None:
-        self.events = [e for e in self.events if e[2] != process]
+        self.events = sorted(e for e in self.events if e[2] != process)
 
     def on(self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]) -> None:
         self.functions.add((kind, process, fn))
@@ -133,6 +133,8 @@ class Simulator:
         self.running = True
 
         while self.running and len(self.events) > 0:
+            # if self.time >= 29769:
+            #     print('  ', [(t, e, p.name) for t, e, p in self.events])
             self.events.sort()
             self.time, current_kind, current_process = self.events.pop(0)
 
@@ -201,20 +203,37 @@ class Simulator:
                 cpu_context_switches += s.context_switches
                 cpu_average_wait_times += s.wait_times
                 cpu_average_ta_times += s.ta_times
-
-        return Stats(
-            self.algorithm.name,
-            cpu,
-            ceil(mean(total_cpu_bursts), 3),
-            ceil(mean(io_cpu_bursts), 3),
-            ceil(mean(cpu_cpu_bursts), 3),
-            ceil(mean(total_average_wait_times), 3),
-            ceil(mean(io_average_wait_times), 3),
-            ceil(mean(cpu_average_wait_times), 3),
-            ceil(mean(total_average_ta_times), 3),
-            ceil(mean(io_average_ta_times), 3),
-            ceil(mean(cpu_average_ta_times), 3),
-            total_context_switches,
-            io_context_switches,
-            cpu_context_switches,
-        )
+        try:
+            return Stats(
+                self.algorithm.name,
+                cpu,
+                ceil(mean(total_cpu_bursts), 3),
+                ceil(mean(io_cpu_bursts), 3),
+                ceil(mean(cpu_cpu_bursts), 3),
+                ceil(mean(total_average_wait_times), 3),
+                ceil(mean(io_average_wait_times), 3),
+                ceil(mean(cpu_average_wait_times), 3),
+                ceil(mean(total_average_ta_times), 3),
+                ceil(mean(io_average_ta_times), 3),
+                ceil(mean(cpu_average_ta_times), 3),
+                total_context_switches,
+                io_context_switches,
+                cpu_context_switches,
+            )
+        except Exception:
+            return Stats(
+                self.algorithm.name,
+                cpu,
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                ceil(mean([0]), 3),
+                total_context_switches,
+                io_context_switches,
+                cpu_context_switches,
+            )

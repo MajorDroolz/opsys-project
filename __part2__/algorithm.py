@@ -21,29 +21,34 @@ class Algorithm:
         simulator.on(Event.IO, process, self.onIO)
         simulator.on(Event.FINISH_IO, process, self.onFinishIO)
         simulator.on(Event.EXIT, process, self.onExit)
+        simulator.on(Event.PREEMPT, process, self.onPreempt)
 
         simulator.addEvent(Event.ARRIVAL, process, process.arrival)
 
-    def onEvented(self, simulator: "Simulator") -> None:
+    def onEvented(self, simulator: "Simulator") -> bool:
         if simulator.current is not None or simulator.switching:
-            return
+            return False
 
         process = len(self.queue) > 0 and self.queue[0] and self.queue[0][1]
 
         if not process:
-            return
+            return False
 
+        self.queue = sorted(p for p in self.queue if p[1] is not process)
         process.onWillCPU(simulator.time)
         simulator.addEvent(Event.CPU, process, simulator.state.t_cs // 2)
         simulator.switching = True
 
+        return True
+
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
         process.onArrival(simulator.time)
 
+    def onPreempt(self, process: Process, simulator: "Simulator") -> None:
+        process.onPreempt(simulator.time)
+
     def onCPU(self, process: Process, simulator: "Simulator") -> None:
         process.onCPU(simulator.time)
-
-        self.queue = sorted(p for p in self.queue if p[1] is not process)
 
     def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
         process.onFinishCPU(simulator.time)
@@ -85,7 +90,7 @@ class FCFS(Algorithm):
 
         cpu, name = process.bursts[process.current_burst].cpu, process.name
         simulator.runProcess(process)
-        simulator.addEvent(Event.FINISH_CPU, process, cpu)
+        simulator.addEvent(Event.FINISH_CPU, process, process.cpu_left)
         simulator.print(f"Process {name} started using the CPU for {cpu}ms burst")
 
     def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
@@ -139,13 +144,19 @@ class SJF(Algorithm):
         cpu, name = process.bursts[process.current_burst].cpu, process.name
         tau = process.tau
         simulator.runProcess(process)
-        simulator.addEvent(Event.FINISH_CPU, process, cpu)
-        simulator.print(
-            f"Process {name} (tau {tau}ms) started using the CPU for {cpu}ms burst"
-        )
+        simulator.addEvent(Event.FINISH_CPU, process, process.cpu_left)
+        if process.cpu_left != cpu:
+            simulator.print(
+                f"Process {name} (tau {tau}ms) started using the CPU for remaining {process.cpu_left}ms of {cpu}ms burst"
+            )
+        else:
+            simulator.print(
+                f"Process {name} (tau {tau}ms) started using the CPU for {cpu}ms burst"
+            )
 
     def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
-        super().onFinishCPU(process, simulator)
+        if super().onFinishCPU(process, simulator):
+            return
 
         simulator.stopProcess()
         burst = process.bursts[process.current_burst]
@@ -185,3 +196,70 @@ class SJF(Algorithm):
         simulator.print(
             f"Process {name} (tau {tau}ms) completed I/O; added to ready queue"
         )
+
+
+class SRT(SJF):
+    name = "SRT"
+
+    def onEvented(self, simulator: "Simulator") -> None:
+        super().onEvented(simulator)
+
+        current, time = simulator.current, simulator.time
+
+        if current is None or simulator.switching or len(self.queue) == 0:
+            return
+
+        process = self.queue[0][1]
+
+        curr_left = current.tau - current.cpu_done
+        curr_cpu = time - current.start_cpu
+        true_curr_left = curr_left - curr_cpu
+
+        best_left = process.tau - process.cpu_done
+        
+        if true_curr_left <= best_left:
+            return
+
+        simulator.removeEventsFor(current)
+
+        simulator.stopProcess()
+        simulator.addEvent(Event.PREEMPT, current, simulator.state.t_cs // 2)
+        current.onFinishCPU(simulator.time)
+
+        simulator.print(
+            f'Process {process.name} (tau {process.tau}ms) will preempt {current.name}'
+        )
+
+    def onPreempt(self, process: Process, simulator: "Simulator") -> None:
+        super().onPreempt(process, simulator)
+
+        simulator.exitProcess(process)
+        self.queue.append((process.tau - process.cpu_done, process))
+        self.queue.sort()
+
+        simulator.switching = False
+
+    def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
+        process.onFinishIO(simulator.time)
+
+        name, tau = process.name, process.tau
+        curr, time = simulator.current, simulator.time
+
+        self.queue.append((process.tau, process))
+        self.queue.sort()
+
+        if curr is not None and not simulator.switching and (curr.tau - curr.cpu_done) - (time - curr.start_cpu) > tau:
+            simulator.removeEventsFor(curr)
+
+            simulator.stopProcess()
+            simulator.addEvent(Event.PREEMPT, curr, simulator.state.t_cs // 2)
+            curr.onFinishCPU(simulator.time)
+            simulator.switching = True
+
+            simulator.print(
+                f'Process {name} (tau {tau}ms) completed I/O; preempting {curr.name}'
+            )
+        else:
+            simulator.print(
+                f"Process {name} (tau {tau}ms) completed I/O; added to ready queue"
+            )

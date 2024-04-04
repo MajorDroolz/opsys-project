@@ -39,33 +39,50 @@ class Process:
 
     tau: int = -1
 
+    start_cpu: int = 0
+    cpu_left: int = 0
+    cpu_done: int = 0
+
+    def getCPULeft(self, time: int) -> int:
+        return self.cpu_left - (time - self.start_cpu)
+    
+    def getCPUDone(self, time: int) -> int:
+        return self.cpu_done + time - self.start_cpu
+
     def __hash__(self) -> int:
         return hash(self.name)
 
     def onArrival(self, time: int) -> None:
         self.start_wait = time
         self.start_ta = time
+        self.cpu_left = self.bursts[self.current_burst].cpu
+        self.cpu_done = 0
 
     def onWillCPU(self, time: int) -> None:
         self.wait_times += [time - self.start_wait]
 
     def onCPU(self, time: int) -> None:
         self.context_switches += 1
-
-    def t(self) -> str:
-        return f" (tau {self.tau}ms)" if self.tau != -1 else ""
+        self.start_cpu = time
 
     def onFinishCPU(self, time: int) -> None:
-        pass
+        self.cpu_left = self.getCPULeft(time)
+        self.cpu_done = self.getCPUDone(time)
 
     def onExit(self, time: int) -> None:
         self.ta_times += [time - self.start_ta]
+
+    def onPreempt(self, time: int) -> None:
+        pass
 
     def onIO(self, time: int) -> None:
         self.ta_times += [time - self.start_ta]
 
     def onFinishIO(self, time: int) -> None:
-        self.current_burst += 1
+        if self.cpu_left == 0:
+            self.current_burst += 1
+            self.cpu_left = self.bursts[self.current_burst].cpu
+            self.cpu_done = 0
         self.start_wait = time
         self.start_ta = time
 
