@@ -3,8 +3,10 @@ from dataclasses import dataclass, field
 from typing import Tuple, Callable, Union
 from process import Process
 from state import State
+from rand48 import Event
 from algorithm import Algorithm
 from statistics import mean
+from os import environ
 import math
 
 
@@ -65,8 +67,8 @@ class Simulator:
     algorithm = Algorithm()
 
     time: int = 0
-    events: set[Tuple[int, str, Process]] = field(default_factory=set)
-    functions: set[Tuple[str, Process, Callable[[Simulator], None]]] = field(
+    events: list[Tuple[int, Event, Process]] = field(default_factory=list)
+    functions: set[Tuple[Event, Process, Callable[[Process, Simulator], None]]] = field(
         default_factory=set
     )
 
@@ -90,20 +92,20 @@ class Simulator:
         self.current = None
         self.processes = set()
 
-    def addEvent(self, kind: str, process: Process, wait: int = 0) -> None:
-        self.events.add((wait + self.time, kind, process))
+    def addEvent(self, kind: Event, process: Process, wait: int = 0) -> None:
+        self.events.append((wait + self.time, kind, process))
 
     def removeEventsFor(self, process: Process) -> None:
-        self.events = {e for e in self.events if e[2] != process}
+        self.events = [e for e in self.events if e[2] != process]
 
-    def on(self, kind: str, process: Process, fn: Callable[[Simulator], None]) -> None:
+    def on(self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]) -> None:
         self.functions.add((kind, process, fn))
 
-    def off(self, kind: str, process: Process, fn: Callable[[Simulator], None]) -> None:
+    def off(self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]) -> None:
         self.functions.remove((kind, process, fn))
 
     def print(self, message: str, override=False) -> None:
-        if not override and self.time >= 10_000:
+        if not override and self.time >= 10_000 and not environ.get('ALL'):
             return
         queue_names = [p[1].name for p in self.algorithm.queue]
         if len(queue_names) == 0:
@@ -115,9 +117,7 @@ class Simulator:
         self.algorithm = algorithm
         self.processes = set(self.state.generate())
 
-        algorithm.onBegin(self)
-
-        [p.handle(self) for p in self.processes]
+        [algorithm.onProcess(p, self) for p in self.processes]
 
         print("")
 
@@ -133,20 +133,15 @@ class Simulator:
         self.running = True
 
         while self.running and len(self.events) > 0:
-            current = min(self.events, key=lambda e: e[0])
-            self.events.remove(current)
-            self.time, current_kind, current_process = current
+            self.events.sort()
+            self.time, current_kind, current_process = self.events.pop(0)
 
             for kind, process, fn in self.functions:
                 if current_kind != kind or process is not current_process:
                     continue
-                fn(self)
+                fn(process, self)
 
-            if self.current is None and not self.switching:
-                process = self.algorithm.next()
-                if process != None:
-                    process.moveToCPU(self)
-                    self.switching = True
+            self.algorithm.onEvented(self)
 
         self.print(f"Simulator ended for {self.algorithm.name}", True)
         self.running = False

@@ -1,6 +1,5 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Tuple, Callable, Union
 from process import Process
 from rand48 import Rand48
 from dataclasses import dataclass

@@ -1,4 +1,14 @@
 from math import log
+from enum import IntEnum
+
+
+class Event(IntEnum):
+    FINISH_CPU = 1
+    CPU = 2
+    FINISH_IO = 3
+    IO = 4
+    ARRIVAL = 5
+    EXIT = 6
 
 
 # Exact algorithm suite in `glibc`.
