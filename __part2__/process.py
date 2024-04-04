@@ -19,6 +19,7 @@ class ProcessStats:
     cpu_bursts: list[int]
     wait_times: list[int]
     ta_times: list[int]
+    preemptions: int
 
 
 @dataclass(order=True)
@@ -32,6 +33,7 @@ class Process:
     context_switches: int = 0
 
     start_wait: int = 0
+    current_wait: int = 0
     wait_times: list[int] = field(default_factory=list)
 
     start_ta: int = 0
@@ -43,47 +45,46 @@ class Process:
     cpu_left: int = 0
     cpu_done: int = 0
 
-    def getCPULeft(self, time: int) -> int:
-        return self.cpu_left - (time - self.start_cpu)
-    
-    def getCPUDone(self, time: int) -> int:
-        return self.cpu_done + time - self.start_cpu
+    preemptions: int = 0
 
     def __hash__(self) -> int:
         return hash(self.name)
 
     def onArrival(self, time: int) -> None:
         self.start_wait = time
+        self.current_wait = 0
         self.start_ta = time
         self.cpu_left = self.bursts[self.current_burst].cpu
         self.cpu_done = 0
 
     def onWillCPU(self, time: int) -> None:
-        self.wait_times += [time - self.start_wait]
+        self.wait_times += [(time - self.start_wait) + self.current_wait]
 
     def onCPU(self, time: int) -> None:
         self.context_switches += 1
         self.start_cpu = time
 
     def onFinishCPU(self, time: int) -> None:
-        self.cpu_left = self.getCPULeft(time)
-        self.cpu_done = self.getCPUDone(time)
+        self.cpu_left -= time - self.start_cpu
+        self.cpu_done += time - self.start_cpu
 
     def onExit(self, time: int) -> None:
         self.ta_times += [time - self.start_ta]
-
+    
     def onPreempt(self, time: int) -> None:
-        pass
+        self.preemptions += 1
+        self.current_wait += time - self.start_wait
+        self.start_wait = time
 
     def onIO(self, time: int) -> None:
         self.ta_times += [time - self.start_ta]
 
     def onFinishIO(self, time: int) -> None:
-        if self.cpu_left == 0:
-            self.current_burst += 1
-            self.cpu_left = self.bursts[self.current_burst].cpu
-            self.cpu_done = 0
+        self.current_burst += 1
+        self.cpu_left = self.bursts[self.current_burst].cpu
+        self.cpu_done = 0
         self.start_wait = time
+        self.current_wait = 0
         self.start_ta = time
 
     def stats(self) -> ProcessStats:
@@ -93,4 +94,5 @@ class Process:
             [b.cpu for b in self.bursts],
             self.wait_times,
             self.ta_times,
+            self.preemptions
         )

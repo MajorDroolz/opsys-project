@@ -34,6 +34,10 @@ class Stats:
     io_context_switches: int
     cpu_context_switches: int
 
+    total_preemptions: int
+    io_preemptions: int
+    cpu_preemptions: int
+
     def __str__(self) -> str:
         return """Algorithm {}
 -- CPU utilization: {:.3f}%
@@ -41,7 +45,7 @@ class Stats:
 -- average wait time: {:.3f} ms ({:.3f} ms/{:.3f} ms)
 -- average turnaround time: {:.3f} ms ({:.3f} ms/{:.3f} ms)
 -- number of context switches: {} ({}/{})
--- number of preemptions: 0 (0/0)""".format(
+-- number of preemptions: {} ({}/{})\n\n""".format(
             self.algorithm,
             self.cpu,
             self.total_average_cpu_burst,
@@ -56,6 +60,9 @@ class Stats:
             self.total_context_switches,
             self.io_context_switches,
             self.cpu_context_switches,
+            self.total_preemptions,
+            self.io_preemptions,
+            self.cpu_preemptions
         )
 
 
@@ -187,22 +194,29 @@ class Simulator:
         io_context_switches = 0
         cpu_context_switches = 0
 
+        total_preemptions = 0
+        io_preemptions = 0
+        cpu_preemptions = 0
+
         for s in stats:
             total_cpu_bursts += s.cpu_bursts
             total_context_switches += s.context_switches
             total_average_wait_times += s.wait_times
             total_average_ta_times += s.ta_times
+            total_preemptions += s.preemptions
 
             if s.bound == "CPU":
                 io_cpu_bursts += s.cpu_bursts
                 io_context_switches += s.context_switches
                 io_average_wait_times += s.wait_times
                 io_average_ta_times += s.ta_times
+                io_preemptions += s.preemptions
             else:
                 cpu_cpu_bursts += s.cpu_bursts
                 cpu_context_switches += s.context_switches
                 cpu_average_wait_times += s.wait_times
                 cpu_average_ta_times += s.ta_times
+                cpu_preemptions += s.preemptions
         try:
             return Stats(
                 self.algorithm.name,
@@ -219,21 +233,9 @@ class Simulator:
                 total_context_switches,
                 io_context_switches,
                 cpu_context_switches,
+                total_preemptions,
+                io_preemptions,
+                cpu_preemptions,
             )
         except Exception:
-            return Stats(
-                self.algorithm.name,
-                cpu,
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                ceil(mean([0]), 3),
-                total_context_switches,
-                io_context_switches,
-                cpu_context_switches,
-            )
+            return Stats('', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)

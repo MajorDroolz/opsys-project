@@ -25,16 +25,11 @@ print(state.toString(processes))
 
 # Part 2
 simulator = Simulator(state)
-try:
-    fcfs = simulator.run(FCFS(), header=True)
-    sjf = simulator.run(SJF())
-    srt = simulator.run(SRT())
-except Exception as e:
-    print(e)
+fcfs = simulator.run(FCFS(), header=True)
+sjf = simulator.run(SJF())
+srt = simulator.run(SRT())
 
 simout = open("simout.txt", "w")
 simout.write(str(fcfs))
-simout.write("\n\n")
 simout.write(str(sjf))
-simout.write("\n\n")
 simout.write(str(srt))
