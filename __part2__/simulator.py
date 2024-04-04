@@ -117,8 +117,6 @@ class Simulator:
         self.algorithm = algorithm
         self.processes = set(self.state.generate())
 
-        algorithm.onBegin(self)
-
         [p.handle(self) for p in self.processes]
 
         print("")
@@ -135,14 +133,8 @@ class Simulator:
         self.running = True
 
         while self.running and len(self.events) > 0:
-            # if self.time > 266390:
-            #     print('  ', sorted((t, e, p.name) for (t, e, p) in self.events))
             self.events.sort()
             self.time, current_kind, current_process = self.events.pop(0)
-
-            # if self.time > 266390:
-            #     print('  ', self.time, current_kind, current_process.name)
-            #     print('  ', self.current and self.current.name, [p.name for _, p in self.algorithm.queue])
 
             for kind, process, fn in self.functions:
                 if current_kind != kind or process is not current_process:
@@ -151,8 +143,6 @@ class Simulator:
 
             if self.current is None and not self.switching:
                 process = self.algorithm.next()
-                # if self.time > 266390:
-                #     print('  ', process.name if process is not None else None)
                 if process != None:
                     process.moveToCPU(self)
                     self.switching = True

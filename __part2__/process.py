@@ -50,41 +50,19 @@ class Process:
     def onArrival(self, simulator: "Simulator") -> None:
         self.start_wait = simulator.time
         self.start_ta = simulator.time
+
         simulator.algorithm.onArrival(self, simulator)
-        simulator.print(f"Process {self.name}{self.t()} arrived; added to ready queue")
 
     def onCPU(self, simulator: "Simulator") -> None:
-        burst = self.bursts[self.current_burst]
-
-        simulator.runProcess(self)
         self.context_switches += 1
-        simulator.algorithm.onCPU(self, simulator)
 
-        simulator.addEvent(Event.FINISH_CPU, self, burst.cpu)
-        simulator.print(
-            f"Process {self.name}{self.t()} started using the CPU for {burst.cpu}ms burst"
-        )
+        simulator.algorithm.onCPU(self, simulator)
 
     def t(self) -> str:
         return f" (tau {self.tau}ms)" if self.tau != -1 else ""
 
     def onFinishCPU(self, simulator: "Simulator") -> None:
-        burst = self.bursts[self.current_burst]
-
-        simulator.stopProcess()
-
-        if burst.io is None:
-            simulator.print(f"Process {self.name} terminated", True)
-            simulator.addEvent(Event.EXIT, self, simulator.state.t_cs // 2)
-        else:
-            simulator.addEvent(Event.IO, self, simulator.state.t_cs // 2)
-            simulator.print(
-                f"Process {self.name}{self.t()} completed a CPU burst; {len(self.bursts) - self.current_burst - 1} burst{'' if len(self.bursts) - self.current_burst - 1 == 1 else 's'} to go"
-            )
-            simulator.algorithm.onFinishCPU(self, simulator)
-            simulator.print(
-                f"Process {self.name} switching out of CPU; blocking on I/O until time {simulator.time + burst.io + simulator.state.t_cs // 2}ms"
-            )
+        simulator.algorithm.onFinishCPU(self, simulator)
 
     def onExit(self, simulator: "Simulator") -> None:
         simulator.exitProcess(self)
@@ -102,8 +80,6 @@ class Process:
         simulator.addEvent(Event.FINISH_IO, self, burst.io)
 
     def onFinishIO(self, simulator: "Simulator") -> None:
-        # if simulator.time >= 266393:
-        #     print("", end='')
         burst = self.bursts[self.current_burst]
         self.current_burst += 1
         if burst.io == None:
