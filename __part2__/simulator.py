@@ -144,6 +144,8 @@ class Simulator:
         self.running = True
 
         while self.running and len(self.events) > 0:
+            if self.time > 1_000_000:
+                break
             # if self.time >= 29769:
             #     print('  ', [(t, e, p.name) for t, e, p in self.events])
             self.events.sort()

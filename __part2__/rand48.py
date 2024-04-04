@@ -10,6 +10,7 @@ class Event(IntEnum):
     ARRIVAL = 5
     EXIT = 6
     PREEMPT = 7
+    EXPIRE = 8
 
 
 # Exact algorithm suite in `glibc`.

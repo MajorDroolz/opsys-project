@@ -76,6 +76,9 @@ class Process:
     def onIO(self, time: int) -> None:
         self.ta_times += [time - self.start_ta]
 
+    def onExpire(self, time: int) -> None:
+        pass
+
     def onFinishIO(self, time: int) -> None:
         self.current_burst += 1
         self.cpu_left = self.bursts[self.current_burst].cpu

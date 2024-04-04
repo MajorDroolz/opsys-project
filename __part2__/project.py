@@ -1,9 +1,7 @@
 from sys import argv
 from state import State, c_float
 from simulator import Simulator
-from algorithm import FCFS, SJF, SRT
-from algorithm import FCFS, SJF
-from simulator import silly
+from algorithm import FCFS, SJF, SRT, RR
 
 
 try:
@@ -62,7 +60,7 @@ except:
     srt = simulator.stats()
 
 try:
-    rr = silly(state)
+    rr = simulator.run(RR())
 except:
     rr = simulator.stats()
 
