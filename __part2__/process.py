@@ -42,16 +42,14 @@ class Process:
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def moveToCPU(self, simulator: "Simulator", ms: Union[int, None] = None) -> None:
-        time = ms if ms is not None else simulator.state.t_cs // 2
-        self.wait_times += [simulator.time - self.start_wait]
-        simulator.addEvent(Event.CPU, self, time)
-
     def onArrival(self, simulator: "Simulator") -> None:
         self.start_wait = simulator.time
         self.start_ta = simulator.time
 
         simulator.algorithm.onArrival(self, simulator)
+
+    def onWillCPU(self, simulator: "Simulator") -> None:
+        self.wait_times += [simulator.time - self.start_wait]
 
     def onCPU(self, simulator: "Simulator") -> None:
         self.context_switches += 1
@@ -65,19 +63,13 @@ class Process:
         simulator.algorithm.onFinishCPU(self, simulator)
 
     def onExit(self, simulator: "Simulator") -> None:
-        simulator.exitProcess(self)
         self.ta_times += [simulator.time - self.start_ta]
         simulator.algorithm.onExit(self, simulator)
 
     def onIO(self, simulator: "Simulator") -> None:
-        burst = self.bursts[self.current_burst]
-        if burst.io == None:
-            return
-
-        simulator.exitProcess(self)
         self.ta_times += [simulator.time - self.start_ta]
+
         simulator.algorithm.onIO(self, simulator)
-        simulator.addEvent(Event.FINISH_IO, self, burst.io)
 
     def onFinishIO(self, simulator: "Simulator") -> None:
         burst = self.bursts[self.current_burst]

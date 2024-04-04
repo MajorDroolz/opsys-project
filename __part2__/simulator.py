@@ -141,11 +141,7 @@ class Simulator:
                     continue
                 fn(self)
 
-            if self.current is None and not self.switching:
-                process = self.algorithm.next()
-                if process != None:
-                    process.moveToCPU(self)
-                    self.switching = True
+            self.algorithm.onEvented(self)
 
         self.print(f"Simulator ended for {self.algorithm.name}", True)
         self.running = False

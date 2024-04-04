@@ -16,6 +16,19 @@ class Algorithm:
     def __init__(self):
         self.queue = []
 
+    def onEvented(self, simulator: "Simulator") -> None:
+        if simulator.current is not None or simulator.switching:
+            return
+        
+        process = len(self.queue) > 0 and self.queue[0] and self.queue[0][1]
+
+        if not process:
+            return
+
+        process.onWillCPU(simulator)
+        simulator.addEvent(Event.CPU, process, simulator.state.t_cs // 2)
+        simulator.switching = True
+
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
         pass
 
@@ -26,20 +39,19 @@ class Algorithm:
         pass
 
     def onIO(self, process: Process, simulator: "Simulator") -> None:
-        pass
+        burst = process.bursts[process.current_burst]
+
+        if burst.io == None:
+            return
+
+        simulator.exitProcess(process)
+        simulator.addEvent(Event.FINISH_IO, process, burst.io)
 
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
         pass
 
     def onExit(self, process: Process, simulator: "Simulator") -> None:
-        pass
-
-    def next(self) -> Union[Process, None]:
-        if len(self.queue) == 0:
-            return None
-
-        _, process = self.queue[0]
-        return process
+        simulator.exitProcess(process)
 
 
 class FCFS(Algorithm):
@@ -61,7 +73,7 @@ class FCFS(Algorithm):
         simulator.runProcess(process)
         simulator.addEvent(Event.FINISH_CPU, process, cpu)
         simulator.print(f"Process {name} started using the CPU for {cpu}ms burst")
-    
+
     def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
         super().onFinishCPU(process, simulator)
 
@@ -74,7 +86,7 @@ class FCFS(Algorithm):
             simulator.addEvent(Event.EXIT, process, simulator.state.t_cs // 2)
         else:
             bursts_left = len(process.bursts) - process.current_burst - 1
-            plural = '' if bursts_left == 1 else 's'
+            plural = "" if bursts_left == 1 else "s"
             io_done = simulator.time + burst.io + simulator.state.t_cs // 2
 
             simulator.addEvent(Event.IO, process, simulator.state.t_cs // 2)
@@ -110,7 +122,9 @@ class SJF(Algorithm):
         tau = process.tau
         simulator.runProcess(process)
         simulator.addEvent(Event.FINISH_CPU, process, cpu)
-        simulator.print(f"Process {name} (tau {tau}ms) started using the CPU for {cpu}ms burst")
+        simulator.print(
+            f"Process {name} (tau {tau}ms) started using the CPU for {cpu}ms burst"
+        )
 
     def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
         super().onFinishCPU(process, simulator)
@@ -124,9 +138,9 @@ class SJF(Algorithm):
             simulator.addEvent(Event.EXIT, process, simulator.state.t_cs // 2)
         else:
             bursts_left = len(process.bursts) - process.current_burst - 1
-            plural = '' if bursts_left == 1 else 's'
+            plural = "" if bursts_left == 1 else "s"
             io_done = simulator.time + burst.io + simulator.state.t_cs // 2
-            
+
             old = process.tau
             t = process.bursts[process.current_burst].cpu
             alpha = simulator.state.alpha
