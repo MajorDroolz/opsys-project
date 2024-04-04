@@ -246,9 +246,9 @@ class Simulator:
 
 
 def silly(state: State):
-
+    print('')
     def printp(s, t):
-        if t < 10000 and t > 7750:
+        if t < 10000:
             print(s)
 
     class queue:
