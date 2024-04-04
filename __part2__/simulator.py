@@ -223,3 +223,187 @@ class Simulator:
             io_context_switches,
             cpu_context_switches,
         )
+
+
+def silly(state: State):
+
+    def printp(s, t):
+        if t < 10000 and t > 7750:
+            print(s)
+
+    class queue:
+        def __init__(self):
+            self.queue = []
+
+        def push(self, a):
+            self.queue.append(a)
+
+        def pop(self):
+            return self.queue.pop(0)
+
+        def __len__(self):
+            return len(self.queue)
+
+        def __str__(self):
+            if self.is_empty():
+                return " <empty>"
+            else:
+                return "".join([" " + x[0].name for x in self.queue])
+
+        def is_empty(self):
+            return len(self.queue) == 0
+
+    # get processes
+    processes = state.generate()
+
+    t = 0
+    t_context_switch = 0
+    t_slice = 0
+
+    ready = queue()
+    running = None
+    waiting = []
+    context_switch_in = None
+    context_switch_out = None
+
+    last_arrival_time = max([x.arrival for x in processes])
+
+    printp("time 0ms: Simulator started for RR [Q <empty>]", t)
+    while (
+        t <= last_arrival_time
+        or not ready.is_empty()
+        or running is not None
+        or len(waiting) != 0
+        or context_switch_out is not None
+        or context_switch_in is not None
+    ):
+        # add processes to ready queue on arrival
+        for process in processes:
+            if process.arrival == t:
+                ready.push([process, process.bursts[0].cpu])
+                printp(
+                    f"time {t}ms: Process {process.name} arrived; added to ready queue [Q{ready}]",
+                    t,
+                )
+
+        # transition out of context switch out
+        if context_switch_out is not None and t_context_switch == 0:
+            if context_switch_out[1] == 0:  # burst complete; transition to IO
+                context_switch_out[1] = (
+                    context_switch_out[0].bursts[context_switch_out[0].current_burst].io
+                )
+                if context_switch_out[1] is not None:
+                    waiting.append(context_switch_out)
+            else:  # premption; transition to ready
+                ready.push(context_switch_out)
+            context_switch_out = None
+
+        # context switch in --> running state
+        if context_switch_in is not None and t_context_switch == 0:
+            running = context_switch_in
+            context_switch_in = None
+            t_slice = state.t_slice
+            if running[1] == running[0].bursts[running[0].current_burst].cpu:
+                printp(
+                    f"time {t}ms: Process {running[0].name} started using the CPU for {running[1]}ms burst [Q{ready}]",
+                    t,
+                )
+            else:
+                printp(
+                    f"time {t}ms: Process {running[0].name} started using the CPU for remaining {running[1]}ms of {running[0].bursts[running[0].current_burst].cpu}ms burst [Q{ready}]",
+                    t,
+                )
+
+        # IO --> queue
+        for process in reversed(waiting):
+            if process[1] == 0:
+                process[0].current_burst += 1
+                process[1] = process[0].bursts[process[0].current_burst].cpu
+                ready.push(process)
+                printp(
+                    f"time {t}ms: Process {process[0].name} completed I/O; added to ready queue [Q{ready}]",
+                    t,
+                )
+                waiting.remove(process)
+            elif process[1] < 0:
+                raise Exception("negative t")
+            else:
+                process[1] -= 1
+
+        # ready queue --> context switch in
+        if running is None and t_context_switch == 0 and not ready.is_empty():
+            context_switch_in = ready.pop()
+            t_context_switch = state.t_cs / 2
+
+        if running is not None:
+            # switch process out of running if burst is completed
+            if running[1] == 0:
+                if running[0].current_burst + 1 == len(running[0].bursts):
+                    context_switch_out = running
+                    print(
+                        f"time {t}ms: Process {running[0].name} terminated [Q{ready}]"
+                    )
+                    # if not ready.is_empty():
+                    #     running = None
+                    #     context_switch_in = ready.pop()
+                    #     t_context_switch = state.t_cs / 2
+                    # else:
+                    #     running = None
+                    running = None
+                    t_context_switch = state.t_cs / 2
+
+                else:
+                    context_switch_out = running
+                    printp(
+                        f"time {t}ms: Process {running[0].name} completed a CPU burst; {len(running[0].bursts) - running[0].current_burst} bursts to go [Q{ready}]",
+                        t,
+                    )
+                    printp(
+                        f"time {t}ms: Process {running[0].name} switching out of CPU; blocking on I/O until time {t + running[0].bursts[running[0].current_burst].io + int(state.t_cs / 2)}ms [Q{ready}]",
+                        t,
+                    )
+                    running = None
+                    t_context_switch = state.t_cs / 2
+
+            # switch process out of running in case of pre-emption --> context out
+            elif t_slice == 0:
+                if ready.is_empty():
+                    t_slice = state.t_slice
+                    printp(
+                        f"time {t}ms: Time slice expired; no preemption because ready queue is empty [Q <empty>]",
+                        t,
+                    )
+                    running[1] -= 1
+                else:
+                    printp(
+                        f"time {t}ms: Time slice expired; preempting process {running[0].name} with {running[1]}ms remaining [Q{ready}]",
+                        t,
+                    )
+                    context_switch_out = running
+                    running = None
+                    t_context_switch = state.t_cs / 2
+
+            else:
+                running[1] -= 1
+
+        # update time values
+        t_context_switch = max(t_context_switch - 1, 0)
+        t_slice = max(t_slice - 1, 0)
+        t += 1
+    print(f"time {t - 1}ms: Simulator ended for RR [Q <empty>]")
+    return Stats(
+        "RR",
+        cpu,
+        ceil(mean(total_cpu_bursts), 3),
+        ceil(mean(io_cpu_bursts), 3),
+        ceil(mean(cpu_cpu_bursts), 3),
+        ceil(mean(total_average_wait_times), 3),
+        ceil(mean(io_average_wait_times), 3),
+        ceil(mean(cpu_average_wait_times), 3),
+        ceil(mean(total_average_ta_times), 3),
+        ceil(mean(io_average_ta_times), 3),
+        ceil(mean(cpu_average_ta_times), 3),
+        total_context_switches,
+        io_context_switches,
+        cpu_context_switches,
+    )
