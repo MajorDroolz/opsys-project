@@ -143,7 +143,7 @@ class Simulator:
 
         self.running = True
 
-        while self.running and len(self.events) > 0 and self.time < 1_000_000:
+        while self.running and len(self.events) > 0:
             self.events.sort()
 
             self.time, current_kind, current_process = self.events.pop(0)
