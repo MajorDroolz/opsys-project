@@ -14,6 +14,13 @@ def ceil(n: float, place: int = 0) -> float:
     return math.ceil((10**place) * n) / (10**place)
 
 
+def bettermean(l: list[int]) -> float:
+    if len(l) == 0:
+        return 0
+    else:
+        return mean(l)
+
+
 @dataclass
 class Stats:
     algorithm: str
@@ -225,15 +232,15 @@ class Simulator:
         return Stats(
             self.algorithm.name,
             cpu,
-            ceil(mean(total_cpu_bursts), 3),
-            ceil(mean(io_cpu_bursts), 3),
-            ceil(mean(cpu_cpu_bursts), 3),
-            ceil(mean(total_average_wait_times), 3),
-            ceil(mean(io_average_wait_times), 3),
-            ceil(mean(cpu_average_wait_times), 3),
-            ceil(mean(total_average_ta_times), 3),
-            ceil(mean(io_average_ta_times), 3),
-            ceil(mean(cpu_average_ta_times), 3),
+            ceil(bettermean(total_cpu_bursts), 3),
+            ceil(bettermean(io_cpu_bursts), 3),
+            ceil(bettermean(cpu_cpu_bursts), 3),
+            ceil(bettermean(total_average_wait_times), 3),
+            ceil(bettermean(io_average_wait_times), 3),
+            ceil(bettermean(cpu_average_wait_times), 3),
+            ceil(bettermean(total_average_ta_times), 3),
+            ceil(bettermean(io_average_ta_times), 3),
+            ceil(bettermean(cpu_average_ta_times), 3),
             total_context_switches,
             io_context_switches,
             cpu_context_switches,
