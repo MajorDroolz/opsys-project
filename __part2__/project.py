@@ -6,18 +6,36 @@ from algorithm import FCFS, SJF
 from simulator import silly
 
 
-if len(argv) != 9:
+try:
+    if len(argv) != 9:
+        raise Exception()
+    
+    n_processes = int(argv[1])
+
+    if n_processes < 0 or n_processes > 26:
+        raise Exception()
+
+    n_cpu = int(argv[2])
+
+    if n_cpu < 0 or n_cpu > n_processes:
+        raise Exception()
+    
+    seed = int(argv[3])
+    λ = float(argv[4])
+    threshold = int(argv[5])
+    t_cs = int(argv[6])
+
+    if t_cs < 0 or t_cs % 2 == 1:
+        raise Exception()
+
+    alpha = float(argv[7])
+    t_slice = int(argv[8])
+
+    if t_slice < 0:
+        raise Exception()
+except:
     print(f"ERROR: Invalid number of parameters.")
     exit(1)
-
-n_processes = int(argv[1])
-n_cpu = int(argv[2])
-seed = int(argv[3])
-λ = float(argv[4])
-threshold = int(argv[5])
-t_cs = int(argv[6])
-alpha = float(argv[7])
-t_slice = int(argv[8])
 
 state = State(n_processes, n_cpu, seed, λ, threshold, t_cs, alpha, t_slice)
 
@@ -27,10 +45,26 @@ print(state.toString(processes))
 
 # Part 2
 simulator = Simulator(state)
-fcfs = simulator.run(FCFS(), header=True)
-sjf = simulator.run(SJF())
-srt = simulator.run(SRT())
-rr = silly(state)
+
+try:
+    fcfs = simulator.run(FCFS(), header=True)
+except:
+    fcfs = simulator.stats()
+
+try:
+    sjf = simulator.run(SJF())
+except:
+    sjf = simulator.stats()
+
+try:
+    srt = simulator.run(SRT())
+except:
+    srt = simulator.stats()
+
+try:
+    rr = silly(state)
+except:
+    rr = simulator.stats()
 
 simout = open("simout.txt", "w")
 simout.write(str(fcfs))

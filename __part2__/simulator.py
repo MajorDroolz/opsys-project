@@ -179,49 +179,50 @@ class Simulator:
         self.current = None
 
     def stats(self) -> Stats:
-        cpu = ceil(100 * (self.cpu_time / self.time), 3)
-        stats = [p.stats() for p in self.processes]
-
-        total_cpu_bursts = []
-        io_cpu_bursts = []
-        cpu_cpu_bursts = []
-
-        total_average_wait_times = []
-        io_average_wait_times = []
-        cpu_average_wait_times = []
-
-        total_average_ta_times = []
-        io_average_ta_times = []
-        cpu_average_ta_times = []
-
-        total_context_switches = 0
-        io_context_switches = 0
-        cpu_context_switches = 0
-
-        total_preemptions = 0
-        io_preemptions = 0
-        cpu_preemptions = 0
-
-        for s in stats:
-            total_cpu_bursts += s.cpu_bursts
-            total_context_switches += s.context_switches
-            total_average_wait_times += s.wait_times
-            total_average_ta_times += s.ta_times
-            total_preemptions += s.preemptions
-
-            if s.bound == "CPU":
-                io_cpu_bursts += s.cpu_bursts
-                io_context_switches += s.context_switches
-                io_average_wait_times += s.wait_times
-                io_average_ta_times += s.ta_times
-                io_preemptions += s.preemptions
-            else:
-                cpu_cpu_bursts += s.cpu_bursts
-                cpu_context_switches += s.context_switches
-                cpu_average_wait_times += s.wait_times
-                cpu_average_ta_times += s.ta_times
-                cpu_preemptions += s.preemptions
         try:
+            cpu = ceil(100 * (self.cpu_time / self.time), 3)
+            stats = [p.stats() for p in self.processes]
+
+            total_cpu_bursts = []
+            io_cpu_bursts = []
+            cpu_cpu_bursts = []
+
+            total_average_wait_times = []
+            io_average_wait_times = []
+            cpu_average_wait_times = []
+
+            total_average_ta_times = []
+            io_average_ta_times = []
+            cpu_average_ta_times = []
+
+            total_context_switches = 0
+            io_context_switches = 0
+            cpu_context_switches = 0
+
+            total_preemptions = 0
+            io_preemptions = 0
+            cpu_preemptions = 0
+
+            for s in stats:
+                total_cpu_bursts += s.cpu_bursts
+                total_context_switches += s.context_switches
+                total_average_wait_times += s.wait_times
+                total_average_ta_times += s.ta_times
+                total_preemptions += s.preemptions
+
+                if s.bound == "CPU":
+                    io_cpu_bursts += s.cpu_bursts
+                    io_context_switches += s.context_switches
+                    io_average_wait_times += s.wait_times
+                    io_average_ta_times += s.ta_times
+                    io_preemptions += s.preemptions
+                else:
+                    cpu_cpu_bursts += s.cpu_bursts
+                    cpu_context_switches += s.context_switches
+                    cpu_average_wait_times += s.wait_times
+                    cpu_average_ta_times += s.ta_times
+                    cpu_preemptions += s.preemptions
+
             return Stats(
                 self.algorithm.name,
                 cpu,
