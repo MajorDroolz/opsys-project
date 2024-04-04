@@ -1,6 +1,5 @@
 from math import log
 from enum import IntEnum
-from dataclasses import dataclass
 
 
 class Event(IntEnum):

@@ -68,7 +68,7 @@ class Simulator:
 
     time: int = 0
     events: list[Tuple[int, Event, Process]] = field(default_factory=list)
-    functions: set[Tuple[Event, Process, Callable[[Simulator], None]]] = field(
+    functions: set[Tuple[Event, Process, Callable[[Process, Simulator], None]]] = field(
         default_factory=set
     )
 
@@ -98,10 +98,10 @@ class Simulator:
     def removeEventsFor(self, process: Process) -> None:
         self.events = [e for e in self.events if e[2] != process]
 
-    def on(self, kind: Event, process: Process, fn: Callable[[Simulator], None]) -> None:
+    def on(self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]) -> None:
         self.functions.add((kind, process, fn))
 
-    def off(self, kind: Event, process: Process, fn: Callable[[Simulator], None]) -> None:
+    def off(self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]) -> None:
         self.functions.remove((kind, process, fn))
 
     def print(self, message: str, override=False) -> None:
@@ -117,7 +117,7 @@ class Simulator:
         self.algorithm = algorithm
         self.processes = set(self.state.generate())
 
-        [p.handle(self) for p in self.processes]
+        [algorithm.onProcess(p, self) for p in self.processes]
 
         print("")
 
@@ -139,7 +139,7 @@ class Simulator:
             for kind, process, fn in self.functions:
                 if current_kind != kind or process is not current_process:
                     continue
-                fn(self)
+                fn(process, self)
 
             self.algorithm.onEvented(self)
 

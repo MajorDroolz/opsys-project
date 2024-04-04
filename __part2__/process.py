@@ -1,10 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Union, Literal, TYPE_CHECKING
-from rand48 import Event
 
 if TYPE_CHECKING:
     from simulator import Simulator
+
 
 @dataclass
 class Burst:
@@ -42,56 +42,32 @@ class Process:
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def onArrival(self, simulator: "Simulator") -> None:
-        self.start_wait = simulator.time
-        self.start_ta = simulator.time
+    def onArrival(self, time: int) -> None:
+        self.start_wait = time
+        self.start_ta = time
 
-        simulator.algorithm.onArrival(self, simulator)
+    def onWillCPU(self, time: int) -> None:
+        self.wait_times += [time - self.start_wait]
 
-    def onWillCPU(self, simulator: "Simulator") -> None:
-        self.wait_times += [simulator.time - self.start_wait]
-
-    def onCPU(self, simulator: "Simulator") -> None:
+    def onCPU(self, time: int) -> None:
         self.context_switches += 1
-
-        simulator.algorithm.onCPU(self, simulator)
 
     def t(self) -> str:
         return f" (tau {self.tau}ms)" if self.tau != -1 else ""
 
-    def onFinishCPU(self, simulator: "Simulator") -> None:
-        simulator.algorithm.onFinishCPU(self, simulator)
+    def onFinishCPU(self, time: int) -> None:
+        pass
 
-    def onExit(self, simulator: "Simulator") -> None:
-        self.ta_times += [simulator.time - self.start_ta]
-        simulator.algorithm.onExit(self, simulator)
+    def onExit(self, time: int) -> None:
+        self.ta_times += [time - self.start_ta]
 
-    def onIO(self, simulator: "Simulator") -> None:
-        self.ta_times += [simulator.time - self.start_ta]
+    def onIO(self, time: int) -> None:
+        self.ta_times += [time - self.start_ta]
 
-        simulator.algorithm.onIO(self, simulator)
-
-    def onFinishIO(self, simulator: "Simulator") -> None:
-        burst = self.bursts[self.current_burst]
+    def onFinishIO(self, time: int) -> None:
         self.current_burst += 1
-        if burst.io == None:
-            return
-        simulator.algorithm.onFinishIO(self, simulator)
-        self.start_wait = simulator.time
-        self.start_ta = simulator.time
-        simulator.print(
-            f"Process {self.name}{self.t()} completed I/O; added to ready queue"
-        )
-
-    def handle(self, simulator: "Simulator") -> None:
-        simulator.on(Event.ARRIVAL, self, self.onArrival)
-        simulator.on(Event.CPU, self, self.onCPU)
-        simulator.on(Event.FINISH_CPU, self, self.onFinishCPU)
-        simulator.on(Event.IO, self, self.onIO)
-        simulator.on(Event.FINISH_IO, self, self.onFinishIO)
-        simulator.on(Event.EXIT, self, self.onExit)
-
-        simulator.addEvent(Event.ARRIVAL, self, self.arrival)
+        self.start_wait = time
+        self.start_ta = time
 
     def stats(self) -> ProcessStats:
         return ProcessStats(

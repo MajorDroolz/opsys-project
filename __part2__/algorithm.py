@@ -1,7 +1,5 @@
-from dataclasses import dataclass
-from typing import Union, Literal, Tuple, TYPE_CHECKING
+from typing import Tuple, TYPE_CHECKING
 from process import Process
-from queue import PriorityQueue
 from math import ceil
 from rand48 import Event
 
@@ -16,29 +14,43 @@ class Algorithm:
     def __init__(self):
         self.queue = []
 
+    def onProcess(self, process: Process, simulator: "Simulator") -> None:
+        simulator.on(Event.ARRIVAL, process, self.onArrival)
+        simulator.on(Event.CPU, process, self.onCPU)
+        simulator.on(Event.FINISH_CPU, process, self.onFinishCPU)
+        simulator.on(Event.IO, process, self.onIO)
+        simulator.on(Event.FINISH_IO, process, self.onFinishIO)
+        simulator.on(Event.EXIT, process, self.onExit)
+
+        simulator.addEvent(Event.ARRIVAL, process, process.arrival)
+
     def onEvented(self, simulator: "Simulator") -> None:
         if simulator.current is not None or simulator.switching:
             return
-        
+
         process = len(self.queue) > 0 and self.queue[0] and self.queue[0][1]
 
         if not process:
             return
 
-        process.onWillCPU(simulator)
+        process.onWillCPU(simulator.time)
         simulator.addEvent(Event.CPU, process, simulator.state.t_cs // 2)
         simulator.switching = True
 
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
-        pass
+        process.onArrival(simulator.time)
 
     def onCPU(self, process: Process, simulator: "Simulator") -> None:
+        process.onCPU(simulator.time)
+
         self.queue = sorted(p for p in self.queue if p[1] is not process)
 
     def onFinishCPU(self, process: Process, simulator: "Simulator") -> None:
-        pass
+        process.onFinishCPU(simulator.time)
 
     def onIO(self, process: Process, simulator: "Simulator") -> None:
+        process.onIO(simulator.time)
+
         burst = process.bursts[process.current_burst]
 
         if burst.io == None:
@@ -48,9 +60,11 @@ class Algorithm:
         simulator.addEvent(Event.FINISH_IO, process, burst.io)
 
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
-        pass
+        process.onFinishIO(simulator.time)
 
     def onExit(self, process: Process, simulator: "Simulator") -> None:
+        process.onExit(simulator.time)
+
         simulator.exitProcess(process)
 
 
@@ -98,16 +112,20 @@ class FCFS(Algorithm):
             )
 
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
-        super().onArrival(process, simulator)
+        super().onFinishIO(process, simulator)
 
         self.queue.append((simulator.time, process))
         self.queue.sort()
+
+        simulator.print(f"Process {process.name} completed I/O; added to ready queue")
 
 
 class SJF(Algorithm):
     name = "SJF"
 
     def onArrival(self, process: Process, simulator: "Simulator") -> None:
+        super().onArrival(process, simulator)
+
         process.tau = ceil(1 / simulator.state.λ)
         self.queue.append((process.tau, process))
         self.queue.sort()
@@ -158,5 +176,12 @@ class SJF(Algorithm):
             )
 
     def onFinishIO(self, process: Process, simulator: "Simulator") -> None:
+        super().onFinishIO(process, simulator)
+
         self.queue.append((process.tau, process))
         self.queue.sort()
+
+        name, tau = process.name, process.tau
+        simulator.print(
+            f"Process {name} (tau {tau}ms) completed I/O; added to ready queue"
+        )
