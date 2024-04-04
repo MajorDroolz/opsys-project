@@ -26,7 +26,7 @@ class Algorithm:
     
     def removeFromQueue(self, process: Process, simulator: "Simulator") -> None:
         self.queue = [(o, p) for o, p in self.queue if p is not process]
-        process.onLeaveQueue(simulator.time - 0 * (simulator.state.t_cs // 2))
+        process.onLeaveQueue(simulator.time)
 
     def onProcess(self, process: Process, simulator: "Simulator") -> None:
         simulator.on(Event.ARRIVAL, process, self.onArrival)
