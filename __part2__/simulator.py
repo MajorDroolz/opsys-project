@@ -34,6 +34,10 @@ class Stats:
     io_context_switches: int
     cpu_context_switches: int
 
+    total_preemptions: int
+    io_preemptions: int
+    cpu_preemptions: int
+
     def __str__(self) -> str:
         return """Algorithm {}
 -- CPU utilization: {:.3f}%
@@ -41,7 +45,7 @@ class Stats:
 -- average wait time: {:.3f} ms ({:.3f} ms/{:.3f} ms)
 -- average turnaround time: {:.3f} ms ({:.3f} ms/{:.3f} ms)
 -- number of context switches: {} ({}/{})
--- number of preemptions: 0 (0/0)""".format(
+-- number of preemptions: {} ({}/{})""".format(
             self.algorithm,
             self.cpu,
             self.total_average_cpu_burst,
@@ -56,6 +60,9 @@ class Stats:
             self.total_context_switches,
             self.io_context_switches,
             self.cpu_context_switches,
+            self.total_preemptions,
+            self.io_preemptions,
+            self.cpu_preemptions,
         )
 
 
@@ -98,14 +105,18 @@ class Simulator:
     def removeEventsFor(self, process: Process) -> None:
         self.events = [e for e in self.events if e[2] != process]
 
-    def on(self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]) -> None:
+    def on(
+        self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]
+    ) -> None:
         self.functions.add((kind, process, fn))
 
-    def off(self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]) -> None:
+    def off(
+        self, kind: Event, process: Process, fn: Callable[[Process, Simulator], None]
+    ) -> None:
         self.functions.remove((kind, process, fn))
 
     def print(self, message: str, override=False) -> None:
-        if not override and self.time >= 10_000 and not environ.get('ALL'):
+        if not override and self.time >= 10_000 and not environ.get("ALL"):
             return
         queue_names = [p[1].name for p in self.algorithm.queue]
         if len(queue_names) == 0:
@@ -217,6 +228,9 @@ class Simulator:
             total_context_switches,
             io_context_switches,
             cpu_context_switches,
+            0,
+            0,
+            0,
         )
 
 
@@ -254,6 +268,7 @@ def silly(state: State):
     t = 0
     t_context_switch = 0
     t_slice = 0
+    t_cpu = 0
 
     ready = queue()
     running = None
@@ -262,6 +277,11 @@ def silly(state: State):
     context_switch_out = None
 
     last_arrival_time = max([x.arrival for x in processes])
+
+    io_cpu_bursts = []
+    cpu_cpu_bursts = []
+    io_preemptions = 0
+    cpu_preemptions = 0
 
     printp("time 0ms: Simulator started for RR [Q <empty>]", t)
     while (
@@ -303,6 +323,10 @@ def silly(state: State):
                     f"time {t}ms: Process {running[0].name} started using the CPU for {running[1]}ms burst [Q{ready}]",
                     t,
                 )
+                if running[0].bound == "CPU":
+                    cpu_cpu_bursts.append(running[1])
+                else:
+                    io_cpu_bursts.append(running[1])
             else:
                 printp(
                     f"time {t}ms: Process {running[0].name} started using the CPU for remaining {running[1]}ms of {running[0].bursts[running[0].current_burst].cpu}ms burst [Q{ready}]",
@@ -374,6 +398,10 @@ def silly(state: State):
                         f"time {t}ms: Time slice expired; preempting process {running[0].name} with {running[1]}ms remaining [Q{ready}]",
                         t,
                     )
+                    if running[0].bound == "CPU":
+                        cpu_preemptions += 1
+                    else:
+                        io_preemptions += 1
                     context_switch_out = running
                     running = None
                     t_context_switch = state.t_cs / 2
@@ -382,23 +410,28 @@ def silly(state: State):
                 running[1] -= 1
 
         # update time values
+        if running is not None:
+            t_cpu += 1
         t_context_switch = max(t_context_switch - 1, 0)
         t_slice = max(t_slice - 1, 0)
         t += 1
     print(f"time {t - 1}ms: Simulator ended for RR [Q <empty>]")
     return Stats(
         "RR",
-        cpu,
-        ceil(mean(total_cpu_bursts), 3),
-        ceil(mean(io_cpu_bursts), 3),
+        ceil(100 * (t_cpu / (t - 1)), 3),
+        ceil(mean(io_cpu_bursts + cpu_cpu_bursts), 3),
         ceil(mean(cpu_cpu_bursts), 3),
-        ceil(mean(total_average_wait_times), 3),
-        ceil(mean(io_average_wait_times), 3),
-        ceil(mean(cpu_average_wait_times), 3),
-        ceil(mean(total_average_ta_times), 3),
-        ceil(mean(io_average_ta_times), 3),
-        ceil(mean(cpu_average_ta_times), 3),
-        total_context_switches,
-        io_context_switches,
-        cpu_context_switches,
+        ceil(mean(io_cpu_bursts), 3),
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        cpu_preemptions + io_preemptions,
+        cpu_preemptions,
+        io_preemptions,
     )

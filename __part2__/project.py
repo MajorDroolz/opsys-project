@@ -30,6 +30,7 @@ simulator = Simulator(state)
 # sjf = simulator.run(SJF())
 # srt = simulator.run(SRT())
 rr = silly(state)
+print(rr)
 
 # simout = open("simout.txt", "w")
 # simout.write(str(fcfs))
