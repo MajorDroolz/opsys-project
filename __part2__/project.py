@@ -1,5 +1,5 @@
 from sys import argv
-from state import State
+from state import State, c_float
 from simulator import Simulator
 from algorithm import FCFS, SJF, SRT
 from algorithm import FCFS, SJF
@@ -28,11 +28,11 @@ try:
     if t_cs < 0 or t_cs % 2 == 1:
         raise Exception()
 
-    alpha = float(argv[7])
+    alpha = c_float(float(argv[7]))
     t_slice = int(argv[8])
 
     if t_slice < 0:
-        raise Exception()
+        raise Exception
 except:
     print(f"ERROR: Invalid number of parameters.")
     exit(1)

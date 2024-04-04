@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from rand48 import Rand48
 from math import floor, ceil
 from process import Process, Burst
+from struct import unpack, pack
 
+def c_float(x: float) -> float:
+    return unpack("f", pack("f", float(x)))[0]
 
 @dataclass
 class State:

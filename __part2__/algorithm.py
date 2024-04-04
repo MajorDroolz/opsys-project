@@ -2,6 +2,7 @@ from typing import Tuple, TYPE_CHECKING
 from process import Process
 from math import ceil
 from rand48 import Event
+from state import c_float
 
 if TYPE_CHECKING:
     from simulator import Simulator
@@ -173,7 +174,7 @@ class SJF(Algorithm):
             old = process.tau
             t = process.bursts[process.current_burst].cpu
             alpha = simulator.state.alpha
-            new = process.tau = ceil(alpha * t + (1 - alpha) * old)
+            new = process.tau = ceil(c_float(alpha * t) + c_float((1 - alpha) * old))
 
             simulator.addEvent(Event.IO, process, simulator.state.t_cs // 2)
             simulator.print(
