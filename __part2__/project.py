@@ -7,7 +7,7 @@ from algorithm import FCFS, SJF, SRT, RR
 try:
     if len(argv) != 9:
         raise Exception()
-    
+
     n_processes = int(argv[1])
 
     if n_processes < 0 or n_processes > 26:
@@ -17,7 +17,7 @@ try:
 
     if n_cpu < 0 or n_cpu > n_processes:
         raise Exception()
-    
+
     seed = int(argv[3])
     λ = float(argv[4])
     threshold = int(argv[5])

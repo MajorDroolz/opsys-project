@@ -220,7 +220,7 @@ class SRT(SJF):
         true_curr_left = curr_left - curr_cpu
 
         best_left = process.tau - process.cpu_done
-        
+
         if true_curr_left <= best_left:
             return
 
@@ -231,7 +231,7 @@ class SRT(SJF):
         current.onFinishCPU(simulator.time)
 
         simulator.print(
-            f'Process {process.name} (tau {process.tau}ms) will preempt {current.name}'
+            f"Process {process.name} (tau {process.tau}ms) will preempt {current.name}"
         )
 
     def onPreempt(self, process: Process, simulator: "Simulator") -> None:
@@ -252,7 +252,11 @@ class SRT(SJF):
         self.queue.append((process.tau, process))
         self.queue.sort()
 
-        if curr is not None and not simulator.switching and (curr.tau - curr.cpu_done) - (time - curr.start_cpu) > tau:
+        if (
+            curr is not None
+            and not simulator.switching
+            and (curr.tau - curr.cpu_done) - (time - curr.start_cpu) > tau
+        ):
             simulator.removeEventsFor(curr)
 
             simulator.stopProcess()
@@ -261,12 +265,13 @@ class SRT(SJF):
             simulator.switching = True
 
             simulator.print(
-                f'Process {name} (tau {tau}ms) completed I/O; preempting {curr.name}'
+                f"Process {name} (tau {tau}ms) completed I/O; preempting {curr.name}"
             )
         else:
             simulator.print(
                 f"Process {name} (tau {tau}ms) completed I/O; added to ready queue"
             )
+
 
 class RR(FCFS):
     name = "RR"
@@ -285,13 +290,15 @@ class RR(FCFS):
             process.onFinishCPU(simulator.time)
             process.start_cpu = simulator.time
 
-            simulator.print(f"Time slice expired; no preemption because ready queue is empty")
+            simulator.print(
+                f"Time slice expired; no preemption because ready queue is empty"
+            )
 
             if process.cpu_left <= simulator.state.t_slice:
                 simulator.addEvent(Event.FINISH_CPU, process, process.cpu_left)
             else:
                 simulator.addEvent(Event.EXPIRE, process, simulator.state.t_slice)
-            
+
             return
 
         super().onExpire(process, simulator)
@@ -304,7 +311,7 @@ class RR(FCFS):
 
         time_left = process.bursts[process.current_burst].cpu - process.cpu_done
         simulator.print(
-            f'Time slice expired; preempting process {process.name} with {time_left}ms remaining'
+            f"Time slice expired; preempting process {process.name} with {time_left}ms remaining"
         )
 
     def onCPU(self, process: Process, simulator: "Simulator") -> None:
@@ -321,4 +328,6 @@ class RR(FCFS):
         if process.cpu_done == 0:
             simulator.print(f"Process {name} started using the CPU for {cpu}ms burst")
         else:
-            simulator.print(f"Process {name} started using the CPU for remaining {process.cpu_left}ms of {cpu}ms burst")
+            simulator.print(
+                f"Process {name} started using the CPU for remaining {process.cpu_left}ms of {cpu}ms burst"
+            )

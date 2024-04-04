@@ -67,7 +67,7 @@ class Process:
 
     def onExit(self, time: int) -> None:
         self.ta_times += [time - self.start_ta]
-    
+
     def onPreempt(self, time: int) -> None:
         self.preemptions += 1
         self.current_wait += time - self.start_wait
@@ -94,5 +94,5 @@ class Process:
             [b.cpu for b in self.bursts],
             self.wait_times,
             self.ta_times,
-            self.preemptions
+            self.preemptions,
         )

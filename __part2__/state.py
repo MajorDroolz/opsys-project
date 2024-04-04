@@ -8,8 +8,10 @@ from math import floor, ceil
 from process import Process, Burst
 from struct import unpack, pack
 
+
 def c_float(x: float) -> float:
     return unpack("f", pack("f", float(x)))[0]
+
 
 @dataclass
 class State:
@@ -64,5 +66,5 @@ class State:
         for p in processes:
             result += "\n"
             result += f"{p.bound}-bound process {p.name}: arrival time {p.arrival}ms; {len(p.bursts)} CPU burst{'' if len(p.bursts) == 1 else 's'}"
-        
+
         return result
