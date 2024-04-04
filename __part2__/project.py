@@ -2,6 +2,8 @@ from sys import argv
 from state import State
 from simulator import Simulator
 from algorithm import FCFS, SJF, SRT
+from algorithm import FCFS, SJF
+from simulator import silly
 
 
 if len(argv) != 9:
@@ -28,8 +30,10 @@ simulator = Simulator(state)
 fcfs = simulator.run(FCFS(), header=True)
 sjf = simulator.run(SJF())
 srt = simulator.run(SRT())
+rr = silly(state)
 
 simout = open("simout.txt", "w")
 simout.write(str(fcfs))
 simout.write(str(sjf))
 simout.write(str(srt))
+simout.write(str(rr))

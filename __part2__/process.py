@@ -2,9 +2,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Union, Literal, TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from simulator import Simulator
-
 
 @dataclass
 class Burst:
