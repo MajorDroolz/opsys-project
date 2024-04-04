@@ -282,6 +282,8 @@ def silly(state: State):
     cpu_cpu_bursts = []
     io_preemptions = 0
     cpu_preemptions = 0
+    io_context_switches = 0
+    cpu_context_switches = 0
 
     printp("time 0ms: Simulator started for RR [Q <empty>]", t)
     while (
@@ -332,6 +334,10 @@ def silly(state: State):
                     f"time {t}ms: Process {running[0].name} started using the CPU for remaining {running[1]}ms of {running[0].bursts[running[0].current_burst].cpu}ms burst [Q{ready}]",
                     t,
                 )
+            if running[0].bound == "CPU":
+                cpu_context_switches += 1
+            else:
+                io_context_switches += 1
 
         # IO --> queue
         for process in reversed(waiting):
@@ -428,9 +434,9 @@ def silly(state: State):
         1,
         1,
         1,
-        1,
-        2,
-        2,
+        cpu_context_switches + io_context_switches,
+        cpu_context_switches,
+        io_context_switches,
         cpu_preemptions + io_preemptions,
         cpu_preemptions,
         io_preemptions,
