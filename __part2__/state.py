@@ -1,8 +1,5 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from process import Process
-from rand48 import Rand48
-from dataclasses import dataclass
 from rand48 import Rand48
 from math import floor, ceil
 from process import Process, Burst

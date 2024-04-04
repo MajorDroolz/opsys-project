@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Union, Literal, TYPE_CHECKING
+from typing import Union, Literal
 
 
 @dataclass
